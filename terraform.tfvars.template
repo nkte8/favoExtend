@@ -1,0 +1,11 @@
+# terrafrom tfvars
+
+# database vars
+upstash_email   = "upstash_email"
+upstash_api_key = "upstash_api_key"
+
+upstash_db_name = "deploy_db_name"
+upstash_db_region = "deploy_region"
+
+# function vars
+cloudflare_api_token = "cloudflare_api_token"

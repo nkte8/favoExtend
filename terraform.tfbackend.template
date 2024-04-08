@@ -1,0 +1,4 @@
+# terraform.tfbackend
+endpoint   = "https://<Cloudflare_account_id>.r2.cloudflarestorage.com"
+access_key = "R2_access_key"
+secret_key = "R2_secret_key"
