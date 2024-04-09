@@ -9,6 +9,14 @@ variable "cloudflare_api_token" {
   type = string
 }
 
+variable "cloudflare_account_id" {
+  type = string
+}
+
+variable "cloudflare_worker_name" {
+  type = string
+}
+
 # function module
 variable "upstash_email" {
   type = string

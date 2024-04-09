@@ -12,6 +12,9 @@ module "database" {
 }
 
 module "function" {
-  source               = "./modules/function"
-  cloudflare_api_token = var.cloudflare_api_token
+  source                = "./modules/function"
+  cloudflare_api_token  = var.cloudflare_api_token
+
+  cloudflare_account_id = var.cloudflare_account_id
+  cloudflare_worker_name = var.cloudflare_worker_name
 }
