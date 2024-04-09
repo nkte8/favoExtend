@@ -1,4 +1,4 @@
-# extendfavorite
+# favoExtend
 
 This is backend-builder of Website favorite(like) and develop extend feature.
 
