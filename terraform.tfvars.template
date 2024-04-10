@@ -8,6 +8,22 @@ upstash_db_name   = "deploy_db_name"
 upstash_db_region = "deploy_region"
 
 # function vars
-cloudflare_api_token   = "cloudflare_api_token"
-cloudflare_account_id  = "cloudflare_account_id"
-cloudflare_worker_name = "cloudflare_worker_name"
+cloudflare_api_token    = "cloudflare_api_token"
+cloudflare_account_id   = "cloudflare_account_id"
+cloudflare_workers_name = "cloudflare_worker_name"
+
+## environment value
+cloudflare_workers_env = {
+  upstash_redis_rest_url   = "https://XXXXXXXX.upstash.io"
+  upstash_redis_rest_token = "XXXXXXXXX"
+  cors_allow_origin        = "*"
+}
+
+## if you enable workers route (exclude subdomain.workers.dev)
+## set "domain" or "route". if not, comment-out or set "disable"
+cloudflare_workers_route_type   = "disable | domain | route (defalut: disable)"
+cloudflare_workers_route_domain = "domain_for_route_workers_script(ex: example.com)"
+## set value when cloudflare_workers_route_type == "domain"
+cloudflare_workers_route_custom_domain = "subdomain_to_workers_script(ex: api.example.com)"
+## set value when cloudflare_workers_route_type == "route"
+cloudflare_workers_route_pattern = "workers_route_pattern(ex: api.example.com/workers/*)"

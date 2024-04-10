@@ -14,15 +14,12 @@ Create Accounts and publish tokens
   - Create API Token from [User API Token](https://dash.cloudflare.com/profile/api-tokens)
     - _NOT API Key_
   - Set allocation of...
-    - Account-Worker Script-Edit
+    - Account-Workers Script-Edit
+    - Zone-Workers Route-Edit (Only if you use workers route)
 
 ### Install terraform
 
 Install terraform CLI. Reference is [here](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli).
-
-### Prepair terraform.tfvars
-
-Prepair `terraform.tfvars` file from `terraform.tfvars.template`
 
 ### Manage tfstate configuration
 
@@ -63,6 +60,24 @@ After you got Access key, Access secret and endpoint url, edit `terraform.tfback
 
 If you manage tfstate on local, you don't need to setup `terraform.tfbackend`.
 
+### Prepair terraform.tfvars
+
+Prepair `terraform.tfvars` file from `terraform.tfvars.template`
+
+#### !Attention
+
+**For LAZINESS or ANNOY of Cloudflare Developper team**, workers route of `workers.dev` zone cannot enable with terraform deploy.
+
+3 Issue about this problem but it closed with any resolve.
+
+[Enable the default route for cloudflare workers #2892](https://github.com/cloudflare/terraform-provider-cloudflare/issues/2892) (Closed with NO support)
+
+[Support Worker Domains #1921](https://github.com/cloudflare/terraform-provider-cloudflare/issues/2892) (Closed with NO support)
+
+[Support for Workers.dev route #1013](https://github.com/cloudflare/terraform-provider-cloudflare/issues/1013) (Closed with NO support)
+
+So `favoExtend` only support workers route of domains you managed in cloudflare domain.
+
 ## Deploy extendfavorite
 
 Initialize environment
@@ -91,5 +106,5 @@ terraform destroy
 
 ## Reference
 
-[Install Terraform | Terraform | HashiCorp Developer](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)
+[Install Terraform | Terraform | HashiCorp Developer](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)  
 [Support Cloudflare r2 for storing Terraform state #33847](https://github.com/hashicorp/terraform/issues/33847#issuecomment-1854605813)
