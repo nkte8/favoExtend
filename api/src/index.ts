@@ -1,4 +1,6 @@
 import { FavoExtend } from './client/favoextend'
+import { HeadersInit } from '@cloudflare/workers-types/experimental'
+import { z } from "zod"
 
 export interface Env {
     UPSTASH_REDIS_REST_URL: string

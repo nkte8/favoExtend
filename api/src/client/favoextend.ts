@@ -1,95 +1,72 @@
 import { RedisWrapper } from './rediswrapper'
 import { z } from 'zod'
-
-// Example FavoExtend
-
-/**
- * Favorite Database interface
- */
-const ZodFavodb = z.object({
-    Id: z.string(),
-    favoCount: z.number(),
-})
-type Favodb = z.infer<typeof ZodFavodb>
-
-/**
- * API GET request URL query params
- */
-const FavoExtendRequestGETQuery: string[] = ['id']
-
-/**
- * API POST request body
- */
-const ZodFavoExtendRequestPOSTBody = z.object({
-    id: z.string(),
-})
-type FavoExtendRequestPOSTBody = z.infer<typeof ZodFavoExtendRequestPOSTBody>
-
-/**
- * API response interface
- */
-interface FavoExtendResponse {
-    count: number
-}
+import { HeadersInit } from '@cloudflare/workers-types/experimental'
+import * as favo from './favoextend.favo'
 
 /**
  * API Error response interface
  */
-interface FavoExtendErrorResponse {
+interface ErrorResponse {
     error: string
     message: string
 }
 
-/**
- * FavoExtend example class
- * @function addFavo Increase favo count 
- * @function readFavo Load favo count
- * @function createResponse create response by request
- */
+// ex: favoDB
 class FavoExtend extends RedisWrapper {
     constructor(env: {
         UPSTASH_REDIS_REST_URL: string
         UPSTASH_REDIS_REST_TOKEN: string
     }) {
-        super(env)
+        // favoDB: value
+        const favoDB = z.number()
+        super(env, favoDB)
     }
-    // Zod parser
-    private validator = (value: any) => ZodFavodb.safeParse(value).success
 
-    // Add Favorite count
-    addFavo = async (Id: string): Promise<number | false> => {
-        try {
-            const value: Favodb | null = await this.readValue<Favodb>(
-                Id,
-                this.validator
-            )
-            // If record not found, create new
-            const record: Favodb = {
-                Id,
-                favoCount: value === null ? 0 : value.favoCount,
-            }
-            record.favoCount += 1
-            this.writeValue<Favodb>(Id, record)
-            return record.favoCount
-        } catch (e: unknown) {
-            return false
+    /**
+     * favoDB; key generator
+     * @param dbType choose DB type
+     * @param body post body
+     * @returns return FAVO/<PageId>/<UserHandle>
+     */
+    keyGenerator = (dbType: 'FAVO', body: favo.PostBody): string => {
+        if (
+            typeof body.handle !== 'undefined' &&
+            (body.handle.match(/\//g) || []).length > 0
+        ) {
+            const e = new Error('Invalid Handle received')
+            e.name = 'Invalid Request'
+            throw e
         }
+        const keyName =
+            typeof body.handle !== 'undefined'
+                ? `${dbType}/${body.id}/${body.handle}`
+                : `${dbType}/${body.id}`
+        if ((keyName.match(/\//g) || []).length > 3) {
+            const e = new Error('Invalid keyName was created.')
+            e.name = 'Server Error'
+            throw e
+        }
+        return keyName
     }
-    // Read Favorite count from ID
-    readFavo = async (Id: string): Promise<number> => {
-        try {
-            const value: Favodb | false =
-                await this.readValueIfValidated<Favodb>(Id, this.validator)
-            // If record not found, create new
-            const record: Favodb = {
-                Id,
-                favoCount: value === false ? 0 : value.favoCount,
-            }
-            this.writeValue<Favodb>(Id, record)
-            return record.favoCount
-        } catch (e: unknown) {
+
+    /**
+     * add favorite count
+     * @param id page id
+     * @param user optional: user name
+     * @returns return value after incremented
+     */
+    addFavo = async (body: favo.PostBody): Promise<number> => {
+        return await this.incrValue(this.keyGenerator('FAVO', body))
+    }
+
+    getFavo = async (query: favo.GetQuery): Promise<number> => {
+        // search key name
+        const keyName = this.keyGenerator('FAVO', { id: query.id })
+        const keys = await this.scan(`${keyName}*`)
+        if (keys.length <= 0) {
             return 0
         }
+        return await this.incrSum(keys)
     }
 
     createResponse = async (
@@ -98,70 +75,57 @@ class FavoExtend extends RedisWrapper {
     ): Promise<Response> => {
         let response: Response | null = null
         try {
+            // if Content-type not json, error
             if (
                 request.headers.get('Content-Type')?.includes('json') !== true
             ) {
-                const e = new Error('Invalid Request')
-                e.name = 'FavoExtend::createResponse'
+                const e = new Error('Invalid Content-type Request received')
+                e.name = 'Invalid Request'
                 throw e
             }
+            // Check method
             switch (request.method.toUpperCase()) {
-                case 'POST':
+                case 'POST': {
                     // validate body
                     const dummyBody: unknown = await request.json()
-                    if (
-                        !ZodFavoExtendRequestPOSTBody.safeParse(dummyBody)
-                            .success
-                    ) {
-                        const e = new Error('Invalid Request')
-                        e.name = 'FavoExtend::createResponse'
+                    if (!favo.PostBody.safeParse(dummyBody).success) {
+                        const e = new Error('Invalid Body Request received')
+                        e.name = 'Invalid Request'
                         throw e
                     }
-                    const body = dummyBody as FavoExtendRequestPOSTBody
-                    // kick addFavo
-                    const result = await this.addFavo(body.id)
-                    if (result === false) {
-                        const e = new Error('Failed to increase favo counter')
-                        e.name = 'FavoExtend::createResponse'
-                        throw e
-                    }
+                    const body: favo.PostBody = favo.PostBody.parse(dummyBody)
                     response = new Response(
-                        JSON.stringify(<FavoExtendResponse>{
-                            count: result,
+                        JSON.stringify(<favo.PostResponse>{
+                            count: await this.addFavo(body),
                         }),
                         { status: 200, headers }
                     )
                     break
-                case 'GET':
+                }
+                case 'GET': {
                     // Check URLQuery
-                    const Url: URL = new URL(request.url)
-                    // Reject not defined query
-                    Url.searchParams.forEach((_, key) => {
-                        if (FavoExtendRequestGETQuery.indexOf(key) === -1) {
-                            const e = new Error('Invalid Request')
-                            e.name = 'FavoExtend::createResponse'
-                            throw e
-                        }
-                    })
-                    const id = Url.searchParams.get('id')
-                    // if id not found, throw error
-                    if (id === null) {
-                        const e = new Error('Invalid Request')
-                        e.name = 'FavoExtend::createResponse'
+                    const dummyQuery: unknown = Object.fromEntries(
+                        new URL(request.url).searchParams.entries()
+                    )
+                    if (!favo.GetQuery.safeParse(dummyQuery).success) {
+                        const e = new Error('Invalid Query Request received')
+                        e.name = 'Invalid Request'
                         throw e
                     }
+                    const query: favo.GetQuery = favo.GetQuery.parse(dummyQuery)
                     response = new Response(
-                        JSON.stringify(<FavoExtendResponse>{
-                            count: await this.readFavo(id),
+                        JSON.stringify(<favo.GetResponse>{
+                            count: await this.getFavo(query),
                         }),
                         { status: 200, headers }
                     )
                     break
+                }
             }
         } catch (e: unknown) {
             if (e instanceof Error) {
                 response = new Response(
-                    JSON.stringify(<FavoExtendErrorResponse>{
+                    JSON.stringify(<ErrorResponse>{
                         error: e.name,
                         message: e.message,
                     }),
