@@ -55,11 +55,7 @@ variable "cloudflare_workers_route_pattern" {
   default = "workers/api"
 }
 
-variable "cloudflare_workers_env" {
-  type = map(string)
-  default = {
-    upstash_redis_rest_url   = "https://example.upstash.io"
-    upstash_redis_rest_token = "XXXXXXXXX"
-    cors_allow_origin        = "*"
-  }
+variable "cloudflare_workers_cors_allow_origin" {
+  type    = string
+  default = "*"
 }

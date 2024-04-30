@@ -1,6 +1,6 @@
-import { Extender } from '../api/Extender'
-import { Definition, KeyValue } from '../api/Definition'
-import { ExtendError } from '@/api/ExtendError'
+import { Extender } from './server/Extender'
+import { Definition, KeyValue } from './server/Definition'
+import { ExtendError } from './server/ExtendError'
 
 export class FavoExtend extends Extender {
     constructor(
@@ -32,6 +32,8 @@ export class FavoExtend extends Extender {
      */
     auth = async (opts?: KeyValue): Promise<undefined> => {
         try {
+            // when you define function, recommend validation
+            this.inputsValidation({ opts })
             if (
                 typeof opts === 'undefined' ||
                 typeof opts['verifySrc'] === 'undefined' ||
@@ -73,6 +75,8 @@ export class FavoExtend extends Extender {
      */
     generateToken = async (key: string): Promise<string> => {
         try {
+            // when you define function, recommend validation
+            this.inputsValidation({ key })
             const token = crypto.randomUUID()
             const result: string | null = await this.Redis.set(key, token, {
                 ex: 3600 * 24 * 7,

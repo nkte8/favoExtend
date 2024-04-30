@@ -1,5 +1,19 @@
-import { Definition } from '../api/Definition'
+import { Definition } from './server/Definition'
 import { z } from 'zod'
+
+/**
+ * handle parameter rule:
+ *  you can manage input parameter with Zod object
+ * example: letters must over 5, not start at number, include only half-width
+ */
+const handleRule = /^[a-zA-Z][a-zA-Z0-9]{4,}$/
+
+/**
+ * id parameter rule:
+ * example: letters must over 5, include half-width and '-' or '_' only
+ */
+const idRule = /^[a-zA-Z0-9_-]{5,}$/
+
 
 /**
  * This is definition of...
@@ -16,7 +30,7 @@ export const GetFavo = new Definition(
         path: '/favo',
         method: 'GET',
         query: z.object({
-            id: z.string(),
+            id: z.string().regex(idRule),
         }),
         output: { count: '{#0}' },
     },
@@ -49,8 +63,8 @@ export const PostFavo = new Definition(
         path: '/favo',
         method: 'POST',
         input: z.object({
-            id: z.string(),
-            handle: z.string().optional(),
+            id: z.string().regex(idRule),
+            handle: z.string().regex(handleRule).optional(),
         }),
         output: { count: '{#1}' },
     },
@@ -85,10 +99,13 @@ export const PostUserEdit = new Definition(
         path: '/user',
         method: 'POST',
         input: z.object({
-            handle: z.string(),
+            handle: z.string().regex(handleRule),
             name: z.string(),
             passwd: z.string(),
         }),
+        output: {
+            result: "ok"
+        }
     },
     [
         {
@@ -122,7 +139,7 @@ export const GetUser = new Definition(
         path: '/user',
         method: 'GET',
         query: z.object({
-            handle: z.string(),
+            handle: z.string().regex(handleRule),
         }),
         output: {
             name: '{#0.name}',
@@ -174,7 +191,7 @@ export const Login = new Definition(
         path: '/login',
         method: 'POST',
         input: z.object({
-            handle: z.string(),
+            handle: z.string().regex(handleRule),
             passwd: z.string(),
         }),
         output: {
@@ -232,8 +249,8 @@ export const PostFavoWithAuth = new Definition(
         path: '/favo',
         method: 'POST',
         input: z.object({
-            id: z.string(),
-            handle: z.string().optional(),
+            id: z.string().regex(idRule),
+            handle: z.string().regex(handleRule).optional(),
             token: z.string().optional(),
         }),
         output: {

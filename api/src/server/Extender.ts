@@ -76,7 +76,7 @@ export class Extender extends RedisClient {
         const requestBody = Definicator.verifyAPIInput(input)
         if (requestBody instanceof Invalid || requestQuery instanceof Invalid) {
             throw new ExtendError({
-                message: 'Invalid Body Request received',
+                message: 'Request coitains invalid inputs',
                 name: 'Invalid Request',
                 status: 400,
             })
@@ -290,19 +290,21 @@ export class Extender extends RedisClient {
     ): Promise<Response> => {
         let response: Response = undefined!
 
-        // if Content-type not json, error
-        if (request.headers.get('Content-Type')?.includes('json') !== true) {
-            throw new ExtendError({
-                message: 'Invalid Content-type Request received',
-                status: 400,
-                name: 'Invalid Request',
-            })
-        }
-        // console.debug(`DEBUG: Request received`)
-        const requestInputRaw = await request.text()
-        const requestInput =
-            requestInputRaw !== '' ? JSON.parse(requestInputRaw) : undefined
         try {
+            // if Content-type not json, error
+            if (
+                request.headers.get('Content-Type')?.includes('json') !== true
+            ) {
+                throw new ExtendError({
+                    message: 'Invalid Content-type Request received',
+                    status: 400,
+                    name: 'Invalid Request',
+                })
+            }
+            // console.debug(`DEBUG: Request received`)
+            const requestInputRaw = await request.text()
+            const requestInput =
+                requestInputRaw !== '' ? JSON.parse(requestInputRaw) : undefined
             const apiResult = await this.apiResult({
                 httpMethod: request.method,
                 requestUrl: new URL(request.url),
@@ -383,6 +385,10 @@ export class Extender extends RedisClient {
                   ) => Promise<JsonType>
               }
     } = {
+        del: {
+            kind: 'keyOnly',
+            function: this.del,
+        },
         incr: {
             kind: 'keyOnly',
             function: this.incr,

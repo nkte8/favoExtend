@@ -25,40 +25,32 @@ Install terraform CLI. Reference is [here](https://developer.hashicorp.com/terra
 
 This product use R2 storage as tfstate backend.
 
+#### If you use R2 backend, setup terraform.tfbackend
+
 If you use save tfstate on Cloudflare R2, you need to get R2 Access key, Access secret and endpoint url from `https://dash.cloudflare.com/<CLOUDFLARE_ACCOUNT_ID>/r2/api-tokens`
-
-If you don't need to manage tfstate on Cloudflare R2, edit `provider.tf`, remove `backend "s3"` block.
-
-```diff
-terraform {
-  required_providers {
-    cloudflare = {
-      source  = "cloudflare/cloudflare"
-      version = "~> 4.0"
-    }
-    upstash = {
-      source  = "upstash/upstash"
-      version = "1.5.3"
-    }
-  }
-- backend "s3" {
--   bucket                      = "tfstate"
--   key                         = "extendfavorite.tfstate"
--   region                      = "auto"
--   skip_credentials_validation = true
--   skip_region_validation      = true
--   skip_requesting_account_id  = true
--   skip_metadata_api_check     = true
--   skip_s3_checksum            = true
-- }
-}
-```
-
-### Prepair terraform.tfbackend
 
 After you got Access key, Access secret and endpoint url, edit `terraform.tfbackend` from `terraform.tfbackend.template`
 
 If you manage tfstate on local, you don't need to setup `terraform.tfbackend`.
+
+#### No need to tfstate or only try, reduce provider.tf
+
+If you don't need to manage tfstate on Cloudflare R2, edit `provider.tf`, remove `backend "s3"` block or delete `provider.tf`.
+
+```diff
+terraform {
+-   backend "s3" {
+-     bucket                      = "tfstate"
+-     key                         = "extendfavorite.tfstate"
+-    region                      = "auto"
+-     skip_credentials_validation = true
+-     skip_region_validation      = true
+-     skip_requesting_account_id  = true
+-     skip_metadata_api_check     = true
+-     skip_s3_checksum            = true
+-   }
+}
+```
 
 ### Prepair terraform.tfvars
 
@@ -78,7 +70,11 @@ Prepair `terraform.tfvars` file from `terraform.tfvars.template`
 
 So `favoExtend` only support workers route of domains you managed in cloudflare domain.
 
-## Deploy extendfavorite
+If you wanna use `workers.dev`, manually setup by dashboard.
+
+![dashboard](.github/manual_workers_route.png)
+
+### Deploy extendfavorite
 
 Initialize environment
 
@@ -103,6 +99,10 @@ Destroy
 ```sh
 terraform destroy
 ```
+
+## Extend API
+
+If you need to Extend API, see [Extend Guide(README.md)](/api/src/README.md).
 
 ## Reference
 

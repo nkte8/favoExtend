@@ -17,7 +17,11 @@ module "function" {
 
   cloudflare_account_id   = var.cloudflare_account_id
   cloudflare_workers_name = var.cloudflare_workers_name
-  cloudflare_workers_env  = var.cloudflare_workers_env
+  cloudflare_workers_env = {
+    upstash_redis_rest_url   = format("https://%s", module.database.upstash_redis_endpoint)
+    upstash_redis_rest_token = module.database.upstash_redis_token
+    cors_allow_origin        = var.cloudflare_workers_cors_allow_origin
+  }
 
   cloudflare_workers_route_type = var.cloudflare_workers_route_type
   cloudflare_workers_route = {

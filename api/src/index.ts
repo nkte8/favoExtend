@@ -1,6 +1,6 @@
 import { HeadersInit } from '@cloudflare/workers-types/experimental'
-import { FavoExtend } from './example/FavoExtend'
-import * as defs from './example/apidefs'
+import { FavoExtend } from './FavoExtend'
+import * as defs from './apidefs'
 
 export interface Env {
     UPSTASH_REDIS_REST_URL: string
