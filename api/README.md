@@ -41,3 +41,15 @@ Run wrangler local server for debugging
 ```sh
 wrangler dev
 ```
+
+
+## Use OpenAI Generator 
+
+```sh
+docker run --rm -v ${PWD}:/local openapitools/openapi-generator-cli:v7.5.0 generate -i /local/openapi/defs.json -g typescript-fetch -o /local/client/
+```
+Reference: [CLI Installation | OpenAPI Generator](https://openapi-generator.tech/docs/installation/#docker)  
+
+```sh
+sudo apt install default-jre
+```

@@ -3,44 +3,43 @@ module.exports = {
         browser: true,
         es2021: true,
     },
-    extends: [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
-        "prettier"
-    ],
-    parser: "@typescript-eslint/parser",
+    extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
+    parser: '@typescript-eslint/parser',
     parserOptions: {
         project: true,
-        ecmaVersion: "latest",
-        sourceType: "module",
+        ecmaVersion: 'latest',
+        sourceType: 'module',
     },
-    plugins: ["@typescript-eslint", "react", "cflint"],
+    plugins: ['@typescript-eslint', 'react', 'cflint'],
     settings: {
         react: {
-            version: "detect",
+            version: 'detect',
         },
     },
     rules: {
-        "cflint/no-substr": 1,
-        "cflint/no-this-assignment": 1,
-        "no-irregular-whitespace": "warn",
-        "prefer-const": "warn",
-        "@typescript-eslint/strict-boolean-expressions": "warn",
-        "@typescript-eslint/no-namespace": "warn",
-        "@typescript-eslint/no-unused-vars": [
-            "warn",
+        'cflint/no-substr': 1,
+        'cflint/no-this-assignment': 1,
+        'no-irregular-whitespace': 'warn',
+        'prefer-const': 'warn',
+        '@typescript-eslint/strict-boolean-expressions': [
+            'warn',
+            { allowString: false, allowNumber: false, allowNullableObject: false },
+        ],
+        '@typescript-eslint/no-namespace': 'warn',
+        '@typescript-eslint/no-unused-vars': [
+            'warn',
             {
-                args: "all",
-                argsIgnorePattern: "^_",
-                caughtErrors: "all",
-                caughtErrorsIgnorePattern: "^_",
-                destructuredArrayIgnorePattern: "^_",
-                varsIgnorePattern: "^_",
+                args: 'all',
+                argsIgnorePattern: '^_',
+                caughtErrors: 'all',
+                caughtErrorsIgnorePattern: '^_',
+                destructuredArrayIgnorePattern: '^_',
+                varsIgnorePattern: '^_',
                 ignoreRestSiblings: true,
             },
         ],
-        "@typescript-eslint/no-misused-promises": [
-            "warn",
+        '@typescript-eslint/no-misused-promises': [
+            'warn',
             {
                 checksVoidReturn: {
                     attributes: false,
@@ -48,30 +47,25 @@ module.exports = {
             },
         ],
     },
-    ignorePatterns: [
-        "dist",
-        ".wrangler",
-        "node_modules",
-        "jest.config.cjs",
-    ],
+    ignorePatterns: ['dist', '.wrangler', 'node_modules', 'jest.config.cjs'],
     overrides: [
         {
-            files: ["*.{tsx, jsx}"],
-            extends: ["plugin:react/recommended", "plugin:react/jsx-runtime"],
+            files: ['*.{tsx, jsx}'],
+            extends: ['plugin:react/recommended', 'plugin:react/jsx-runtime'],
         },
         {
-            files: [".eslintrc.{js,cjs}"],
+            files: ['.eslintrc.{js,cjs}'],
             env: {
                 node: true,
             },
             parserOptions: {
-                sourceType: "script",
+                sourceType: 'script',
             },
-            extends: ["plugin:@typescript-eslint/disable-type-checked"],
+            extends: ['plugin:@typescript-eslint/disable-type-checked'],
         },
         {
-            files: ["tests/**/*"],
-            extends: ["plugin:@typescript-eslint/disable-type-checked"],
+            files: ['tests/**/*'],
+            extends: ['plugin:@typescript-eslint/disable-type-checked'],
         },
     ],
 }

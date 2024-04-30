@@ -1,0 +1,9 @@
+{
+  "unexpected": {
+    "summary": "Unexpected error",
+    "value": {
+      "error": "Unexpected error",
+      "message": "Unexpected error occurd."
+    }
+  }
+}

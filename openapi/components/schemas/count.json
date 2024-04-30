@@ -1,0 +1,10 @@
+{
+  "count": {
+    "type": "object",
+    "properties": {
+      "count": {
+        "type": "integer"
+      }
+    }
+  }
+}
