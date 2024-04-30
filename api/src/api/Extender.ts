@@ -63,6 +63,7 @@ export class Extender extends RedisClient {
         }
         // Unique Definicate
         const Definicator: Definition = selectedDefinicators[0]
+        // console.debug(`DEBUG: Definicator defined`)
 
         const entries = Array.from(
             new Set(new URL(requestUrl).searchParams.entries()),
@@ -239,12 +240,11 @@ export class Extender extends RedisClient {
                     message: 'Unexpected Error',
                     status: 500,
                 })
-                if (e instanceof Error) {
-                    ex.name = e.name
-                    ex.message = e.message
-                }
                 if (e instanceof ExtendError) {
                     ex = e
+                } else if (e instanceof Error) {
+                    ex.name = e.name
+                    ex.message = e.message
                 }
                 throw ex
             }
@@ -298,34 +298,34 @@ export class Extender extends RedisClient {
                 name: 'Invalid Request',
             })
         }
-
+        // console.debug(`DEBUG: Request received`)
+        const requestInputRaw = await request.text()
+        const requestInput =
+            requestInputRaw !== '' ? JSON.parse(requestInputRaw) : undefined
         try {
-            response = new Response(
-                JSON.stringify(
-                    this.apiResult({
-                        httpMethod: request.method,
-                        requestUrl: new URL(request.url),
-                        input: await request.json(),
-                    }),
-                ),
-                { status: 200, headers },
-            )
+            const apiResult = await this.apiResult({
+                httpMethod: request.method,
+                requestUrl: new URL(request.url),
+                input: requestInput,
+            })
+            response = new Response(JSON.stringify(apiResult), {
+                status: 200,
+                headers,
+            })
             // Check method
         } catch (e: unknown) {
-            let ex: ExtendError = undefined!
-            if (e instanceof Error) {
+            let ex: ExtendError = new ExtendError({
+                message: 'Unexpected Error. e is unknown',
+                status: 500,
+                name: 'Unexpected Error',
+            })
+            if (e instanceof ExtendError) {
+                ex = e
+            } else if (e instanceof Error) {
                 ex = new ExtendError({
                     message: e.message,
                     name: e.name,
                     status: 500,
-                })
-            } else if (e instanceof ExtendError) {
-                ex = e
-            } else {
-                ex = new ExtendError({
-                    message: 'Unexpected Error. e is unknown',
-                    status: 500,
-                    name: 'Unexpected Error',
                 })
             }
             console.error(

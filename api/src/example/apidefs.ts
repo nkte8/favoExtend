@@ -175,7 +175,7 @@ export const Login = new Definition(
         method: 'POST',
         input: z.object({
             handle: z.string(),
-            pencoded: z.string(),
+            passwd: z.string(),
         }),
         output: {
             token: '{#2}',
@@ -193,7 +193,7 @@ export const Login = new Definition(
         {
             functionName: 'auth',
             opts: {
-                verifySrc: '{pencoded}',
+                verifySrc: '{passwd}',
                 verifyDist: '{#0}',
             },
         },

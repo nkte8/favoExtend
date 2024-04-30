@@ -53,7 +53,9 @@ export class FavoExtend extends Extender {
                 })
             }
         } catch (e: unknown) {
-            if (e instanceof Error) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
                 throw new ExtendError({
                     message: e.message,
                     status: 500,
@@ -84,7 +86,9 @@ export class FavoExtend extends Extender {
             }
             return token
         } catch (e: unknown) {
-            if (e instanceof Error) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
                 throw new ExtendError({
                     message: e.message,
                     status: 500,
