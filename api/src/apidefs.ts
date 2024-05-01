@@ -183,7 +183,6 @@ export const GetUser = new Definition(
  *    output: undefined
  *   generateToken definition -> ... <---- Extend function(your define)
  *    key: token/{handle}
- *    input: { handle: "{handle}" } <--- get handle from Request body
  *    output: <string = #2>
  */
 export const Login = new Definition(
@@ -217,9 +216,6 @@ export const Login = new Definition(
         {
             keyPattern: 'token/{handle}',
             functionName: 'generateToken',
-            input: {
-                handle: '{handle}',
-            },
             output: z.string(),
         },
     ],
