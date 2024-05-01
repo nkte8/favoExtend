@@ -6,20 +6,19 @@ type JsonObj = { [key: string]: JsonType }
 type JsonType = JsonLiteral | JsonObj | JsonType[]
 type KeyValue = { [key: string]: string }
 
-type RelationDataType = { [key: string]: RelationDataType } | string
-type RelationTypes = RelationDataType | undefined
+type RelationType = { [key: string]: RelationType } | string
 
 type ApiDef = {
     path: string
     method: string
     input?: z.ZodSchema<JsonType>
     query?: z.ZodSchema<KeyValue>
-    output?: RelationTypes
+    output?: RelationType
 }
 type RedisDef = {
     keyPattern: string
     functionName: string
-    input?: RelationTypes
+    input?: RelationType
     output?: z.ZodSchema<JsonType>
     ignoreFail: boolean
     dependFunc?: number[]
@@ -109,7 +108,7 @@ class Definition {
         relationData,
         inputData,
     }: {
-        relationData: RelationDataType
+        relationData: RelationType
         inputData: JsonType
     }) => {
         const Regex = /{([^{}]*)}/g
@@ -152,7 +151,7 @@ class Definition {
         relationData,
     }: {
         inputData: JsonType
-        relationData: RelationDataType | undefined
+        relationData: RelationType | undefined
     }) => {
         if (typeof relationData === 'undefined') {
             return
@@ -364,5 +363,4 @@ export {
     type JsonLiteral,
     type JsonObj,
     type KeyValue,
-    type RelationTypes,
 }
