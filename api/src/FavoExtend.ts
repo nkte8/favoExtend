@@ -1,16 +1,20 @@
 import { Extender } from './server/Extender'
-import { Definition, KeyValue } from './server/Definition'
+import * as defs from './apidefs'
+import { KeyValue } from './server/Definition'
 import { ExtendError } from './server/ExtendError'
 
 export class FavoExtend extends Extender {
-    constructor(
-        env: {
-            UPSTASH_REDIS_REST_URL: string
-            UPSTASH_REDIS_REST_TOKEN: string
-        },
-        definicators: Definition[],
-    ) {
-        super(env, definicators)
+    constructor(env: {
+        UPSTASH_REDIS_REST_URL: string
+        UPSTASH_REDIS_REST_TOKEN: string
+    }) {
+        super(env, [
+            defs.GetFavo,
+            defs.GetUser,
+            defs.PostFavoWithAuth,
+            defs.PostUserEdit,
+            defs.Login,
+        ])
 
         // Register your extend functions
         this.addMethod({

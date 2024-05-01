@@ -1,6 +1,5 @@
 import { HeadersInit } from '@cloudflare/workers-types/experimental'
 import { FavoExtend } from './FavoExtend'
-import * as defs from './apidefs'
 
 export interface Env {
     UPSTASH_REDIS_REST_URL: string
@@ -24,19 +23,10 @@ export default {
             })
         }
         // create client example
-        const Client = new FavoExtend(
-            {
-                UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
-                UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
-            },
-            [
-                defs.GetFavo,
-                defs.GetUser,
-                defs.PostFavoWithAuth,
-                defs.PostUserEdit,
-                defs.Login,
-            ],
-        )
+        const Client = new FavoExtend({
+            UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
+            UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
+        })
 
         const response: Response = await Client.createResponse(request, header)
         return response

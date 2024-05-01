@@ -48,36 +48,29 @@ By default, you cau use these `functionName` below.
 
 ## How to use API
 
-Edit `index.ts`, Create `<Your API Class Name, example FavoExtend>` Instance, init with env, `@upstash/redis` parameter, and list of your definications(`Definition` class Instances).
-
-`Extender` have `createResponse`, can create Cloudflare Worker response from request and header. You only need define API, list into definication.
+Edit `index.ts`, Create `Extender` Instance, init with env, `@upstash/redis` parameter, and list of your definications(`Definition` class Instances).
 
 ```ts
-import { FavoExtend } from './FavoExtend'
+import { Extender } from './server/Extender'
 import * as defs from './apidefs'
-...
+
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
-
-        const Client = new FavoExtend(
+        const Client = new Extender(
             {
                 UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
                 UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
             },
-            [
-                defs.GetFavo,
-                defs.GetUser,
-                defs.PostFavoWithAuth,
-                defs.PostUserEdit,
-                defs.Login,
-            ],
+            [defs.GetFavo, defs.GetUser, defs.PostFavo, defs.PostUserEdit],
         )
 
         const response: Response = await Client.createResponse(request, header)
         return response
-    }
+    },
 }
 ```
+
+`Extender` have `createResponse`, can create Cloudflare Worker response from request and header. You only need define API, list into definication.
 
 ## How to extend API
 
@@ -86,16 +79,22 @@ See Extend example `FavoExtend.ts`. Create new class extend by `Extender`, use `
 
 ```ts
 import { Extender } from './server/Extender'
-...
+import { ExtendError } from './server/ExtendError'
+import * as defs from './apidefs'
+
 export class FavoExtend extends Extender {
-    constructor(
-        env: {
-            UPSTASH_REDIS_REST_URL: string
-            UPSTASH_REDIS_REST_TOKEN: string
-        },
-        definicators: Definition[],
-    ) {
-        super(env, definicators)
+    constructor(env: {
+        UPSTASH_REDIS_REST_URL: string
+        UPSTASH_REDIS_REST_TOKEN: string
+    }) {
+        super(env, [
+            defs.GetFavo,
+            defs.GetUser,
+            defs.PostFavoWithAuth,
+            defs.PostUserEdit,
+            defs.Login,
+        ])
+
         // Register your extend functions
         this.addMethod({
             auth: {
@@ -123,6 +122,25 @@ When you add your function, you need to set `kind` by function input below.
 | key and Json Object(and options) need | keyObj     |
 
 [^1]: options is un managed key-value object. need to control in function.
+
+About FavoExtend, It already contain definitions. So when you call the class from `index.ts`, you can write simply define like below...
+
+```ts
+import { FavoExtend } from './FavoExtend'
+...
+export default {
+    async fetch(request: Request, env: Env): Promise<Response> {
+
+        const Client = new FavoExtend({
+            UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
+            UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
+        })
+
+        const response: Response = await Client.createResponse(request, header)
+        return response
+    }
+}
+```
 
 ## How to test function
 
