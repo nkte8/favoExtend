@@ -45,6 +45,7 @@ By default, you cau use these `functionName` below.
 | set                  | [upstash SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/set). set string value to DB.                                                                                     |
 | jsonGet              | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. to define `path` option, set `opts: {path: <JsonPath, default $(root)>}` |
 | jsonSet              | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. to define `path` option, set `opts: {path: <JsonPath, default $(root)>}` |
+| scanMget             | Get all values with key-pattern matched. If no keys matched, throw Error.                                                                                                                          |
 
 ## How to use API
 

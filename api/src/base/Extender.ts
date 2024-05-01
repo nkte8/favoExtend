@@ -421,6 +421,10 @@ export class Extender extends RedisClient {
             kind: 'keyObj',
             function: this.jsonSet,
         },
+        scanMget: {
+            kind: 'keyOnly',
+            function: this.scanMget,
+        },
     }
 
     protected addMethod = (method: typeof this.methods) => {

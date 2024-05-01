@@ -76,6 +76,42 @@ class RedisClient {
     }
 
     /**
+     * scanMget: scan pattern, return values
+     * @param pattern Glob-style pattern.
+     */
+    scanMget = async (pattern: string): Promise<JsonType> => {
+        try {
+            this.inputsValidation({ key: pattern })
+            // search pattern
+            const [_, keys] = await this.Redis.scan(0, {
+                match: pattern,
+            })
+            // if no keys found throw error
+            if (keys.length <= 0) {
+                throw new ExtendError({
+                    message: `No found keypattern: ${pattern}`,
+                    status: 500,
+                    name: 'KeyScan Failed',
+                })
+            }
+            const values: JsonType[] = await this.Redis.mget(keys)
+            // console.debug(`DEBUG: ${JSON.stringify(values)}`)
+            return values
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error')
+        }
+    }
+
+    /**
      * incrSum: return increment sum.
      * @param pattern Glob-style pattern.
      */
