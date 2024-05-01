@@ -1,4 +1,4 @@
-import { Definition } from './server/Definition'
+import { Definition } from '@/base/Definition'
 import { z } from 'zod'
 
 /**

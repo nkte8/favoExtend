@@ -1,7 +1,7 @@
-import { Extender } from './server/Extender'
+import { Extender } from '@/base/Extender'
 import * as defs from './apidefs'
-import { KeyValue } from './server/Definition'
-import { ExtendError } from './server/ExtendError'
+import { KeyValue } from '@/base/Definition'
+import { ExtendError } from '@/base/ExtendError'
 
 export class FavoExtend extends Extender {
     constructor(env: {

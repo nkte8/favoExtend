@@ -50,9 +50,11 @@ By default, you cau use these `functionName` below.
 
 Edit `index.ts`, Create `Extender` Instance, init with env, `@upstash/redis` parameter, and list of your definications(`Definition` class Instances).
 
+like that...
+
 ```ts
-import { Extender } from './server/Extender'
-import * as defs from './apidefs'
+import { Extender } from '@/base/Extender'
+import * as defs from '@/your_apidefs'
 
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
@@ -61,7 +63,12 @@ export default {
                 UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
                 UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
             },
-            [defs.GetFavo, defs.GetUser, defs.PostFavo, defs.PostUserEdit],
+            [
+                defs.YourAPIDef1,
+                defs.YourAPIDef2,
+                defs.YourAPIDef3,
+                defs.YourAPIDef4,
+            ],
         )
 
         const response: Response = await Client.createResponse(request, header)
@@ -78,8 +85,7 @@ If you need more Redis DB Action to define API, You can extend new Action.
 See Extend example `FavoExtend.ts`. Create new class extend by `Extender`, use `addMethod` to add your method.
 
 ```ts
-import { Extender } from './server/Extender'
-import { ExtendError } from './server/ExtendError'
+import { Extender } from '@/base/Extender'
 import * as defs from './apidefs'
 
 export class FavoExtend extends Extender {
@@ -126,7 +132,8 @@ When you add your function, you need to set `kind` by function input below.
 About FavoExtend, It already contain definitions. So when you call the class from `index.ts`, you can write simply define like below...
 
 ```ts
-import { FavoExtend } from './FavoExtend'
+import { FavoExtend } from './example/favoExtend'
+
 ...
 export default {
     async fetch(request: Request, env: Env): Promise<Response> {
