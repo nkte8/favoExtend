@@ -244,7 +244,7 @@ export class RedisClient {
     }
 
     /** mget: Read DB. if value not found, throw error.
-     * @param key DB key
+     * @param key DB keys
      */
     mget = async (key: string[]): Promise<string[]> => {
         try {
@@ -254,7 +254,7 @@ export class RedisClient {
                     nval.push(value)
                 }
                 return nval
-            },[])
+            }, [])
             if (result.length === 0) {
                 throw new ExtendError({
                     message: `Data not found.`,
@@ -350,7 +350,6 @@ export class RedisClient {
 
     /** jsonGet: Read db value of json data
      * @param key DB key
-     * @param input register DB value
      * @param opts.path default '$', set get json path
      */
     jsonGet = async (key: string, opts?: JsonObj): Promise<JsonType> => {
@@ -375,9 +374,10 @@ export class RedisClient {
                     name: 'Not Found',
                 })
             }
-            console.debug(`DEBUG: result=${JSON.stringify(result)}`)
             const parsedResult = this.replaceNullToUndefined(result)
-            console.debug(`DEBUG: parsedResult=${JSON.stringify(parsedResult)}`)
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            // console.debug(`DEBUG: parsedResult=${JSON.stringify(parsedResult)}`)
+
             // If result length = 1, return as single
             if (Array.isArray(parsedResult) && parsedResult.length === 1) {
                 const value = parsedResult[0]
@@ -398,6 +398,61 @@ export class RedisClient {
         }
     }
 
+    /** jsonMget: Read db values of json data
+     * @param keys DB keys
+     * @param opts.path default '$', set get json path
+     */
+    jsonMget = async (keys: string[], opts?: JsonObj): Promise<JsonType> => {
+        try {
+            const verifiedOpts = this.verifyParameter(
+                opts,
+                z.object({ path: z.string().default('$') }).or(z.undefined()),
+            )
+            const path: string =
+                typeof verifiedOpts?.path !== 'undefined'
+                    ? verifiedOpts.path
+                    : '$'
+            const mgetResult: JsonTypeNullAble = await this.Redis.json.mget(
+                keys,
+                path,
+            )
+            if (mgetResult === null || typeof mgetResult === 'undefined') {
+                throw new ExtendError({
+                    message: `Data not found error`,
+                    status: 404,
+                    name: 'Not Found',
+                })
+            }
+            const parsedResult = this.replaceNullToUndefined(mgetResult)
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            // console.debug(`DEBUG: parsedResult=${JSON.stringify(parsedResult)}`)
+
+            if (!Array.isArray(parsedResult)) {
+                // mgetResult must be Array
+                throw new Error('Unexpected Error')
+            }
+            // If result length = 1, return as single
+            const result: JsonType[] = parsedResult.map((json) => {
+                if (Array.isArray(json) && json.length === 1) {
+                    return json[0]
+                }
+                return json
+            })
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            return result
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at jsonGet')
+        }
+    }
     /** jsonSet: Write db value of json data
      * @param key DB key
      * @param input register DB value
@@ -874,4 +929,5 @@ export class RedisClient {
         .or(z.literal('zset'))
         .or(z.literal('hash'))
         .or(z.literal('none'))
+        .or(z.literal('json'))
 }

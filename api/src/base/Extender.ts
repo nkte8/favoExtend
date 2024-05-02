@@ -486,6 +486,10 @@ export class Extender extends RedisClient {
             kind: 'keyOnly',
             function: this.jsonGet,
         },
+        jsonMget: {
+            kind: 'multiKey',
+            function: this.jsonMget,
+        },
         jsonSet: {
             kind: 'json',
             function: this.jsonSet,

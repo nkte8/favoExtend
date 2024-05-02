@@ -45,6 +45,7 @@ By default, you cau use these `functionName` below.
 | getUndefinedAble | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, return undefined. |
 | set | [upstash SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/set). set string value to DB. |
 | jsonGet | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. |
+| jsonMget | [upstash JSON.MGET wrapper](https://upstash.com/docs/oss/sdks/py/redis/commands/json/mget). get values to json data from DB by Multikeys. |
 | jsonSet | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. |
 | jsonDel | [upstash JSON.DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/del). del value to json data from DB. |
 | scan | Get all string values with key-pattern matched. If no keys matched, throw Error. |
