@@ -4,6 +4,7 @@
     "semi": false,
     "useTabs": false,
     "tabWidth": 4,
+    "proseWrap": "never",
     "overrides": [
         {
             "files": "*.json",

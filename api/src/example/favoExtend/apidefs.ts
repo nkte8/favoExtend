@@ -36,7 +36,7 @@ export const GetFavo = new Definition(
     },
     [
         {
-            keyPattern: 'favo/{id}',
+            keyPattern: 'favo/{#.id}',
             functionName: 'getUndefinedAble',
             output: z.number().default(0),
         },
@@ -70,13 +70,13 @@ export const PostFavo = new Definition(
     },
     [
         {
-            keyPattern: 'user/{handle}/{id}',
+            keyPattern: 'user/{#.handle}/{#.id}',
             functionName: 'incr',
             output: z.number(),
             ignoreFail: true,
         },
         {
-            keyPattern: 'favo/{id}',
+            keyPattern: 'favo/{#.id}',
             functionName: 'incr',
             output: z.number(),
         },
@@ -109,11 +109,11 @@ export const PostUserEdit = new Definition(
     },
     [
         {
-            keyPattern: 'user/{handle}',
+            keyPattern: 'user/{#.handle}',
             functionName: 'jsonSet',
             input: {
-                name: '{name}',
-                passwd: '{passwd}',
+                name: '{#.name}',
+                passwd: '{#.passwd}',
             },
         },
     ],
@@ -148,7 +148,7 @@ export const GetUser = new Definition(
     },
     [
         {
-            keyPattern: 'user/{handle}',
+            keyPattern: 'user/{#.handle}',
             functionName: 'jsonGet',
             output: z.object({
                 name: z.string(),
@@ -156,7 +156,7 @@ export const GetUser = new Definition(
             }),
         },
         {
-            keyPattern: 'user/{handle}/*',
+            keyPattern: 'user/{#.handle}/*',
             functionName: 'incrSumUndefinedAble',
             output: z.number().default(0),
         },
@@ -199,7 +199,7 @@ export const Login = new Definition(
     },
     [
         {
-            keyPattern: 'user/{handle}',
+            keyPattern: 'user/{#.handle}',
             functionName: 'jsonGet',
             output: z.string(),
             opts: {
@@ -209,12 +209,12 @@ export const Login = new Definition(
         {
             functionName: 'auth',
             opts: {
-                verifySrc: '{passwd}',
+                verifySrc: '{#.passwd}',
                 verifyDist: '{#0}',
             },
         },
         {
-            keyPattern: 'token/{handle}',
+            keyPattern: 'token/{#.handle}',
             functionName: 'generateToken',
             output: z.string(),
         },
@@ -256,7 +256,7 @@ export const PostFavoWithAuth = new Definition(
     },
     [
         {
-            keyPattern: 'token/{handle}',
+            keyPattern: 'token/{#.handle}',
             functionName: 'get',
             output: z.string(),
             ignoreFail: true,
@@ -264,20 +264,20 @@ export const PostFavoWithAuth = new Definition(
         {
             functionName: 'auth',
             opts: {
-                verifySrc: '{token}',
+                verifySrc: '{#.token}',
                 verifyDist: '{#0}',
             },
             ignoreFail: true,
         },
         {
-            keyPattern: 'user/{handle}/{id}',
+            keyPattern: 'user/{#.handle}/{#.id}',
             functionName: 'incr',
             output: z.number(),
             ignoreFail: true,
             dependFunc: [0, 1],
         },
         {
-            keyPattern: 'favo/{id}',
+            keyPattern: 'favo/{#.id}',
             functionName: 'incr',
             output: z.number(),
         },

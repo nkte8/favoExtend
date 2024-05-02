@@ -34,18 +34,25 @@ About `functionName` of `Redis DB Actions`, You need to set function to each Red
 
 By default, you cau use these `functionName` below.
 
-| functionName         | Description                                                                                                                                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| del                  | [upstash DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/del). delete DB value.                                                                                           |
-| incr                 | [upstash INCR wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/incr). incriment DB value.                                                                                       |
-| incrSum              | Get sum of DB values. Input keyPattern like `value/*` and return sum. If collected values contain not-number, throw Error.                                                                         |
-| incrSumUndefinedAble | Get sum of DB values. Input keyPattern like `value/*` and return sum. If collected values contain not-number, skip value.                                                                          |
-| get                  | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, throw Error.                                                    |
-| getUndefinedAble     | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, return undefined.                                               |
-| set                  | [upstash SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/set). set string value to DB.                                                                                     |
-| jsonGet              | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. to define `path` option, set `opts: {path: <JsonPath, default $(root)>}` |
-| jsonSet              | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. to define `path` option, set `opts: {path: <JsonPath, default $(root)>}` |
-| scanMget             | Get all values with key-pattern matched. If no keys matched, throw Error.                                                                                                                          |
+| functionName | Description |
+| --- | --- |
+| del | [upstash DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/del). delete DB value. |
+| incr | [upstash INCR wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/incr). incriment DB value. |
+| incrSum | Get sum of DB values. Input keyPattern like `value/*` and return sum. If collected values contain not-number, throw Error. |
+| incrSumUndefinedAble | Get sum of DB values. Input keyPattern like `value/*` and return sum. If collected values contain not-number, skip value. |
+| get | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, throw Error. |
+| mget | [upstash MGET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/mget). get DB values as string by Multikeys. |
+| getUndefinedAble | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, return undefined. |
+| set | [upstash SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/set). set string value to DB. |
+| jsonGet | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. |
+| jsonSet | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. |
+| jsonDel | [upstash JSON.DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/del). del value to json data from DB. |
+| scan | Get all string values with key-pattern matched. If no keys matched, throw Error. |
+| typeGrep | Grep type choosed from key list |
+| zadd | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd) |
+| zrem | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem) |
+| zrank | [upstash ZRANK wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrank) |
+| zrange | [upstash ZRANGE wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrange) |
 
 ## How to use API
 
@@ -82,8 +89,7 @@ export default {
 
 ## How to extend API
 
-If you need more Redis DB Action to define API, You can extend new Action.
-See Extend example `FavoExtend.ts`. Create new class extend by `Extender`, use `addMethod` to add your method.
+If you need more Redis DB Action to define API, You can extend new Action. See Extend example `FavoExtend.ts`. Create new class extend by `Extender`, use `addMethod` to add your method.
 
 ```ts
 import { Extender } from '@/base/Extender'

@@ -1,5 +1,5 @@
 // test/index.spec.ts
-import { env, SELF } from 'cloudflare:test'
+import { env } from 'cloudflare:test'
 import { describe, it, expect } from 'vitest'
 import { Extender } from '@/base/Extender'
 import * as defs from './mockdefs'
@@ -19,7 +19,16 @@ describe('API test', () => {
             requestUrl: new URL('https://example.com/allActivetoken'),
         })
         const [_, keys] = await RedisClient.scan(0, { match: 'token/*' })
-        const list = await RedisClient.mget(keys)
+        const keysAvailable: string[] = []
+        await Promise.all(
+            keys.map(async (key) => {
+                const type = await RedisClient.type(key)
+                if (type === 'string') {
+                    keysAvailable.push(key)
+                }
+            }),
+        )
+        const list = await RedisClient.mget(keysAvailable)
         expect(await result).toMatchObject(list)
     })
 })

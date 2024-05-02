@@ -1,6 +1,7 @@
-import { Definition, Invalid, JsonObj, JsonType, KeyValue } from './Definition'
+import { Definition, Invalid } from './Definition'
 import { RedisClient } from './RedisClient'
 import { ExtendError } from './ExtendError'
+import { JsonType, JsonObj } from './availableTypes'
 
 export class Ignored {
     // Use Ignored Status Unique Type
@@ -25,7 +26,7 @@ export class Extender extends RedisClient {
      * @param requestUrl request URL object
      * @param input request Body object
      */
-    public apiResult = async ({
+    async apiResult({
         httpMethod,
         requestUrl,
         input,
@@ -33,7 +34,7 @@ export class Extender extends RedisClient {
         httpMethod: string
         requestUrl: URL
         input?: JsonType
-    }): Promise<JsonType | undefined> => {
+    }): Promise<JsonType | undefined> {
         // Search Definicator match requested
         const resultSearchDefinicators = await Promise.all(
             this.Definitions.map((def) => {
@@ -81,18 +82,25 @@ export class Extender extends RedisClient {
                 status: 400,
             })
         }
-        let requestInput: JsonObj = {}
+        let dummyInput: JsonObj = {}
         if (typeof requestQuery !== 'undefined') {
-            requestInput = { ...requestInput, ...requestQuery }
+            dummyInput = { ...dummyInput, ...requestQuery }
         }
         if (typeof requestBody === 'object' && !Array.isArray(requestBody)) {
-            requestInput = { ...requestInput, ...requestBody }
+            dummyInput = { ...dummyInput, ...requestBody }
         }
+        // Wrap input by "#"
+        const requestInput: JsonObj = {}
+        requestInput['#'] = { ...dummyInput }
 
         const definicatorRunResult: (JsonType | undefined | Ignored)[] = []
         // process by order
         for (let index = 0; index < Definicator.dbDefs.length; index++) {
             const dbDef = Definicator.dbDefs[index]
+            console.info(
+                `INFO: Start Process #${index}, function: ${dbDef.functionName}`,
+            )
+            // console.debug(`DEBUG: requestInput=${JSON.stringify(requestInput)}`)
             const dbInput = await Promise.all([
                 Definicator.redisKeyPatternToKey({
                     apiInput: requestInput,
@@ -106,7 +114,13 @@ export class Extender extends RedisClient {
                     inputData: requestInput,
                     opts: dbDef.opts,
                 }),
+                Definicator.redisMultiKeyRefToMultiKeys({
+                    apiInput: requestInput,
+                    multiKeysRef: dbDef.multiKeysRef,
+                }),
             ])
+            // console.debug(`DEBUG: dbInput=${JSON.stringify(dbInput)}`)
+
             // if keyPattern is left, process skip
             const keyPatternVerify = [...dbInput[0].matchAll(/{([^{}]*)}/g)]
             if (keyPatternVerify.length > 0) {
@@ -126,6 +140,7 @@ export class Extender extends RedisClient {
             const dbFunctionKeypattern = dbInput[0]
             const dbFunctionInput = dbInput[1]
             const dbFunctionOpts = dbInput[2]
+            const multiKeysRef = dbInput[3]
             // console.debug(
             //     `DEBUG: keyPattern={${dbFunctionKeypattern}}, input={${JSON.stringify(
             //         dbFunctionInput,
@@ -136,7 +151,10 @@ export class Extender extends RedisClient {
             const apiDefinedMethod = this.methods[dbDef.functionName]
 
             if (
-                apiDefinedMethod.kind !== 'methodOnly' &&
+                !(
+                    apiDefinedMethod.kind === 'method' ||
+                    apiDefinedMethod.kind === 'multiKey'
+                ) &&
                 dbFunctionKeypattern === ''
             ) {
                 if (dbDef.ignoreFail === true) {
@@ -176,7 +194,7 @@ export class Extender extends RedisClient {
 
             try {
                 switch (apiDefinedMethod.kind) {
-                    case 'methodOnly': {
+                    case 'method': {
                         dummyResult =
                             await apiDefinedMethod.function(dbFunctionOpts)
                         break
@@ -188,10 +206,10 @@ export class Extender extends RedisClient {
                         )
                         break
                     }
-                    case 'keyStr': {
+                    case 'string': {
                         if (typeof dbFunctionInput !== 'string') {
                             throw new ExtendError({
-                                message: 'Undefined input requested',
+                                message: 'Function needs string input.',
                                 name: 'Unexpected Request',
                                 status: 500,
                             })
@@ -203,7 +221,7 @@ export class Extender extends RedisClient {
                         )
                         break
                     }
-                    case 'keyObj': {
+                    case 'json': {
                         if (
                             typeof dbFunctionInput !== 'object' ||
                             Array.isArray(dbFunctionInput)
@@ -221,6 +239,28 @@ export class Extender extends RedisClient {
                         )
                         break
                     }
+                    case 'array': {
+                        if (!Array.isArray(dbFunctionInput)) {
+                            throw new ExtendError({
+                                message: 'Undefined input requested',
+                                name: 'Unexpected Request',
+                                status: 500,
+                            })
+                        }
+                        dummyResult = await apiDefinedMethod.function(
+                            dbFunctionKeypattern,
+                            dbFunctionInput,
+                            dbFunctionOpts,
+                        )
+                        break
+                    }
+                    case 'multiKey': {
+                        dummyResult = await apiDefinedMethod.function(
+                            multiKeysRef,
+                            dbFunctionOpts,
+                        )
+                        break
+                    }
                     default: {
                         throw new ExtendError({
                             message: 'Undefined Function kind requested',
@@ -229,7 +269,9 @@ export class Extender extends RedisClient {
                         })
                     }
                 }
-                // console.debug(`DEBUG: dummyResult=${JSON.stringify(dummyResult)}`)
+                // console.debug(
+                //     `DEBUG: dummyResult=${JSON.stringify(dummyResult)}`,
+                // )
             } catch (e: unknown) {
                 if (dbDef.ignoreFail === true) {
                     // console.debug(`DEBUG: #${index} ignored. Method Error`)
@@ -248,12 +290,22 @@ export class Extender extends RedisClient {
                 }
                 throw ex
             }
+            // if ignoreOutput is true, not verificate output
+            if (dbDef.ignoreOutput === true) {
+                definicatorRunResult.push(dummyResult)
+                requestInput[`#${index}`] = dummyResult
+                console.info(
+                    `INFO: Finished Process #${index}, ignore Output Definication.`,
+                )
+
+                continue
+            }
             // console.debug(`DEBUG: dummyResult=${JSON.stringify(dummyResult)}`)
             const dbMethodResult = Definicator.verifyRedisOutput(
                 dummyResult,
                 dbDef,
             )
-            // if output is not
+            // if output is not expected, fail. if ignoreOutput is true, not verification.
             if (dbMethodResult instanceof Invalid) {
                 if (dbDef.ignoreFail === true) {
                     // console.debug(`DEBUG: #${index} ignored. Output invalid`)
@@ -270,6 +322,7 @@ export class Extender extends RedisClient {
             definicatorRunResult.push(dbMethodResult)
             // Add requestInput to before API result
             requestInput[`#${index}`] = dbMethodResult
+            console.info(`INFO: Finished Process #${index}`)
         }
         // Ignored function replace undefined
         const replacedResults = definicatorRunResult.map((value) => {
@@ -284,10 +337,10 @@ export class Extender extends RedisClient {
         })
     }
 
-    public createResponse = async (
+    async createResponse(
         request: Request,
         headers: HeadersInit,
-    ): Promise<Response> => {
+    ): Promise<Response> {
         let response: Response = undefined!
 
         try {
@@ -361,27 +414,39 @@ export class Extender extends RedisClient {
     protected methods: {
         [x: string]:
             | {
-                  kind: 'methodOnly'
-                  function: (opts?: KeyValue) => Promise<JsonType>
+                  kind: 'method'
+                  function: (opts?: JsonObj) => Promise<JsonType>
               }
             | {
                   kind: 'keyOnly'
-                  function: (key: string, opts?: KeyValue) => Promise<JsonType>
+                  function: (key: string, opts?: JsonObj) => Promise<JsonType>
               }
             | {
-                  kind: 'keyStr'
+                  kind: 'string'
                   function: (
                       key: string,
                       str: string,
-                      opts?: KeyValue,
+                      opts?: JsonObj,
                   ) => Promise<JsonType>
               }
             | {
-                  kind: 'keyObj'
+                  kind: 'multiKey'
+                  function: (key: string[], opts?: JsonObj) => Promise<JsonType>
+              }
+            | {
+                  kind: 'json'
                   function: <T extends JsonObj>(
                       key: string,
                       data: T,
-                      opts?: KeyValue,
+                      opts?: JsonObj,
+                  ) => Promise<JsonType>
+              }
+            | {
+                  kind: 'array'
+                  function: <T extends JsonType[]>(
+                      key: string,
+                      data: T,
+                      opts?: JsonObj,
                   ) => Promise<JsonType>
               }
     } = {
@@ -405,12 +470,16 @@ export class Extender extends RedisClient {
             kind: 'keyOnly',
             function: this.get,
         },
+        mget: {
+            kind: 'multiKey',
+            function: this.mget,
+        },
         getUndefinedAble: {
             kind: 'keyOnly',
             function: this.getUndefinedAble,
         },
         set: {
-            kind: 'keyStr',
+            kind: 'string',
             function: this.set,
         },
         jsonGet: {
@@ -418,16 +487,32 @@ export class Extender extends RedisClient {
             function: this.jsonGet,
         },
         jsonSet: {
-            kind: 'keyObj',
+            kind: 'json',
             function: this.jsonSet,
         },
-        scanMget: {
+        scan: {
             kind: 'keyOnly',
-            function: this.scanMget,
+            function: this.scan,
+        },
+        typeGrep: {
+            kind: 'method',
+            function: this.typeGrep,
+        },
+        zadd: {
+            kind: 'array',
+            function: this.zadd,
+        },
+        zrem: {
+            kind: 'array',
+            function: this.zrem,
+        },
+        zrank: {
+            kind: 'string',
+            function: this.zrank,
         },
     }
 
-    protected addMethod = (method: typeof this.methods) => {
+    protected addMethod(method: typeof this.methods) {
         this.methods = { ...this.methods, ...method }
     }
 }

@@ -1,10 +1,7 @@
 import { z } from 'zod'
 import { ExtendError } from './ExtendError'
 
-type JsonLiteral = boolean | number | string | undefined
-type JsonObj = { [key: string]: JsonType }
-type JsonType = JsonLiteral | JsonObj | JsonType[]
-type KeyValue = { [key: string]: string }
+import { JsonType, JsonObj } from './availableTypes'
 
 type RelationType = { [key: string]: RelationType } | string
 
@@ -12,17 +9,19 @@ type ApiDef = {
     path: string
     method: string
     input?: z.ZodSchema<JsonType>
-    query?: z.ZodSchema<KeyValue>
+    query?: z.ZodSchema<JsonObj>
     output?: RelationType
 }
 type RedisDef = {
     keyPattern: string
+    multiKeysRef: string
     functionName: string
     input?: RelationType
     output?: z.ZodSchema<JsonType>
     ignoreFail: boolean
+    ignoreOutput: boolean
     dependFunc?: number[]
-    opts?: KeyValue
+    opts?: JsonObj
 }
 
 export class Invalid {
@@ -31,12 +30,20 @@ export class Invalid {
 
 type UnRequire<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
 
-class Definition {
+export class Definition {
     public apiDef: ApiDef
     public dbDefs: RedisDef[]
+    /**
+     * Create API Definition
+     * @param apiDef set { path, method, input, query, output }
+     * @param dbDefs set [{ keyPattern, functionName, input, output, ignoreFail, ignoreOutput, dependFunc, opts }]
+     */
     constructor(
         apiDef: ApiDef,
-        dbDefs: UnRequire<RedisDef, 'keyPattern' | 'ignoreFail'>[],
+        dbDefs: UnRequire<
+            RedisDef,
+            'keyPattern' | 'multiKeysRef' | 'ignoreFail' | 'ignoreOutput'
+        >[],
     ) {
         this.apiDef = apiDef
         const dbdef = dbDefs.map((value) => {
@@ -46,24 +53,53 @@ class Definition {
             if (typeof value.ignoreFail === 'undefined') {
                 value.ignoreFail = false
             }
+            if (typeof value.ignoreOutput === 'undefined') {
+                value.ignoreOutput = false
+            }
+            if (typeof value.multiKeysRef === 'undefined') {
+                value.multiKeysRef = ''
+            }
             return value as RedisDef
         })
         this.dbDefs = dbdef
     }
 
-    verifyAPIQuery = (dummy: unknown): Invalid | KeyValue | undefined => {
+    /**
+     * reduceBooleanFromOpt: reduce keys includes literals except string
+     * @param opts opts
+     * @returns reduce opt keys include not string
+     */
+    protected reduceNotStringFromOpt(opts: JsonObj): { [key: string]: string } {
+        return Object.keys(opts).reduce<{
+            [key: string]: string
+        }>((nval, key) => {
+            const value = opts[key]
+            if (typeof value === 'string') {
+                nval[key] = value
+            }
+            return nval
+        }, {})
+    }
+
+    /**
+     * verifyAPIQuery check input API query fulfilled definication
+     * @param dummy input
+     * @returns If correct retrun query, if not return Invalid
+     */
+    verifyAPIQuery(dummy: unknown): Invalid | JsonObj | undefined {
         const zodObject = this.apiDef.query
         if (typeof zodObject === 'undefined') {
             return dummy === undefined ? undefined : new Invalid()
         }
         const result = this.verifyZod(dummy, zodObject)
         if (typeof result !== 'object' || Array.isArray(result)) {
+            // apiDef must object, if failed, its problem of zod
             throw Error('Unexpected Error')
         }
         return result
     }
 
-    verifyAPIInput = (dummy: unknown): Invalid | JsonType | undefined => {
+    verifyAPIInput(dummy: unknown): Invalid | JsonType | undefined {
         const zodObject = this.apiDef.input
         if (typeof zodObject === 'undefined') {
             return dummy === undefined ? undefined : new Invalid()
@@ -78,39 +114,42 @@ class Definition {
         return this.verifyZod(dummy, redisDef.output)
     }
 
-    private verifyZod = (
+    verifyZod<T extends JsonType>(
         dummy: unknown,
-        zodObject: z.ZodSchema<JsonType> | undefined,
-    ): Invalid | JsonType | undefined => {
+        zodObject: z.ZodSchema<T> | undefined,
+    ): Invalid | T | undefined {
         if (typeof zodObject === 'undefined') {
             return dummy === undefined ? undefined : new Invalid()
         }
-        if (!zodObject.safeParse(dummy).success) {
+        const safeParsed = zodObject.safeParse(dummy)
+        if (!safeParsed.success) {
             return new Invalid()
         }
-        return zodObject.parse(dummy)
+        return safeParsed.data
     }
 
-    isEnable = ({
+    isEnable({
         requestPath,
         httpMethod,
     }: {
         requestPath: string
         httpMethod: string
-    }): boolean => {
+    }): boolean {
         return (
             requestPath === this.apiDef.path &&
             httpMethod === this.apiDef.method
         )
     }
 
-    private replaceRelationTypeToInputAbleData = async ({
+    private async replaceRelationTypeToInputAbleData({
         relationData,
         inputData,
     }: {
         relationData: RelationType
         inputData: JsonType
-    }) => {
+    }) {
+        // console.debug(`DEBUG: relationData=${JSON.stringify(relationData)}`)
+        // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
         const Regex = /{([^{}]*)}/g
         const result: JsonType = {}
         if (typeof relationData === 'string') {
@@ -126,7 +165,7 @@ class Definition {
             if (matchedArray.length == 0) {
                 return relationData
             }
-
+            // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
             const refMarker = matchedArray[0][1]
             const refValue = this.getValueFromObjectByRef({
                 refMarker,
@@ -135,46 +174,50 @@ class Definition {
             // console.debug(`DEBUG: refMarker=${refMarker}, refValue=${refValue}`)
             return refValue
         }
+
         Object.keys(relationData).map(async (key) => {
+            // console.debug(`DEBUG: key=${key}`)
             const currentRelation = relationData[key]
             const searchResult = await this.replaceRelationTypeToInputAbleData({
                 relationData: currentRelation,
                 inputData,
             })
             result[key] = searchResult
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
         })
         return result
     }
 
-    apiInputToRedisInput = ({
+    apiInputToRedisInput({
         inputData,
         relationData,
     }: {
         inputData: JsonType
         relationData: RelationType | undefined
-    }) => {
+    }) {
         if (typeof relationData === 'undefined') {
             return
         }
         return this.replaceRelationTypeToInputAbleData({
             relationData: relationData,
-            inputData,
+            inputData: inputData,
         })
     }
-    redisOutputToOptsInput = async ({
+    async redisOutputToOptsInput({
         inputData,
         opts,
     }: {
         inputData: JsonType
-        opts: KeyValue | undefined
-    }) => {
+        opts: JsonObj | undefined
+    }) {
         if (typeof opts === 'undefined') {
             return
         }
         const parseResult = await this.replaceRelationTypeToInputAbleData({
-            relationData: opts,
+            relationData: this.reduceNotStringFromOpt(opts),
             inputData: inputData,
         })
+        // console.log(`DEBUG: parseResult=${JSON.stringify(parseResult)}`)
         if (Array.isArray(parseResult) || typeof parseResult !== 'object') {
             throw new ExtendError({
                 message: 'opts are KeyValue but parse result some literal',
@@ -182,22 +225,14 @@ class Definition {
                 name: 'Unexpected Error',
             })
         }
-        const result: KeyValue = {}
-        Object.keys(parseResult).forEach((key) => {
-            const currentValue = parseResult[key]
-            if (typeof currentValue !== 'string') {
-                return
-            }
-            result[key] = currentValue
-        })
-        return result
+        return parseResult
     }
 
-    redisOutputsToApiOutput = async ({
+    async redisOutputsToApiOutput({
         inputDatas,
     }: {
         inputDatas: (JsonType | undefined)[]
-    }) => {
+    }) {
         if (inputDatas.length !== this.dbDefs.length) {
             throw new Error('DB result seems not match to definition')
         }
@@ -224,15 +259,17 @@ class Definition {
         return result
     }
 
-    getValueFromObjectByRef = ({
+    getValueFromObjectByRef({
         refMarker,
         searchData,
     }: {
         refMarker: string
         searchData: JsonType
-    }): JsonType => {
+    }): JsonType {
         const refMarkers = refMarker.split('.')
         const currentKey = refMarkers[0]
+        // console.debug(`DEBUG: searchData=${JSON.stringify(searchData)}`)
+        // console.debug(`DEBUG: refMarker=${refMarker}`)
 
         // If searchData is JsonObj, return or research
         if (typeof searchData === 'object' && !Array.isArray(searchData)) {
@@ -266,29 +303,90 @@ class Definition {
                 name: 'Invalid Request',
             })
         }
-        if (currentKey !== '#') {
-            throw new ExtendError({
-                message: 'Object exists, but key is not #',
-                status: 500,
-                name: 'Invalid Request',
-            })
-        }
-        return searchData
+        // if (currentKey !== '#') {
+        throw new ExtendError({
+            // message: 'Object exists, but key is not #',
+            message: 'Invalid ref required.',
+            status: 500,
+            name: 'Invalid Request',
+        })
+        // }
+        // return searchData
     }
 
-    redisKeyPatternToKey = async ({
+    async redisMultiKeyRefToMultiKeys({
+        apiInput,
+        multiKeysRef,
+    }: {
+        apiInput: JsonType
+        multiKeysRef: string
+    }): Promise<string[]> {
+        const Regex = /{([^{}]*)}/g
+        const matchedArray = [...multiKeysRef.matchAll(Regex)]
+
+        if (typeof apiInput === 'undefined') {
+            return [multiKeysRef]
+        }
+        // console.debug(`DEBUG: apiInput=${JSON.stringify(apiInput)}`)
+        const replaceResults = await Promise.all(
+            matchedArray.map((value) => {
+                const matchedRef = value[1]
+                // Search ref
+                const inputData = this.getValueFromObjectByRef({
+                    refMarker: matchedRef,
+                    searchData: apiInput,
+                })
+                // if inputData is not defined, not edit dbkeyPattern
+                if (typeof inputData === 'undefined') {
+                    return
+                }
+                if (!Array.isArray(inputData)) {
+                    throw new ExtendError({
+                        message:
+                            'multiKeyRef definition must be replaceable to array',
+                        status: 500,
+                        name: 'Invalid ref definition',
+                    })
+                }
+                // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
+                return inputData
+            }),
+        )
+        // console.debug(`DEBUG: replaceResults=${JSON.stringify(replaceResults)}`)
+
+        const result = replaceResults.reduce((nval: string[], value) => {
+            if (Array.isArray(value)) {
+                const strFilterResult = value.reduce<string[]>((nnval, val) => {
+                    if (typeof val === 'string') {
+                        nnval.push(val)
+                    }
+                    return nnval
+                }, [])
+                nval = [...nval, ...strFilterResult]
+            }
+            return nval
+        }, [])
+
+        return result
+    }
+
+    async redisKeyPatternToKey({
         apiInput,
         dbKeyPattern,
     }: {
         apiInput: JsonType
         dbKeyPattern: string
-    }): Promise<string> => {
+    }): Promise<string> {
         const Regex = /{([^{}]*)}/g
         const matchedArray = [...dbKeyPattern.matchAll(Regex)]
 
         if (typeof apiInput === 'undefined') {
             return dbKeyPattern
         }
+        // console.debug(
+        //     `DEBUG: apiInput=${JSON.stringify(apiInput)}`,
+        // )
+
         await Promise.all(
             matchedArray.map((value) => {
                 const matchedRef = value[1]
@@ -313,12 +411,13 @@ class Definition {
                     `{${matchedRef}}`,
                     inputData,
                 )
+                // console.debug(`DEBUG: dbKeyPattern=${dbKeyPattern}`)
             }),
         )
         return dbKeyPattern
     }
 
-    verifyRefMarker = (dummyRefMarker: string): boolean => {
+    verifyRefMarker(dummyRefMarker: string): boolean {
         return RegExp(/a/g).test(dummyRefMarker)
     }
 
@@ -328,13 +427,13 @@ class Definition {
      * @param refMarker init refName, default
      * @returns new refName
      */
-    createRefFromObject = ({
+    createRefFromObject({
         searchObject,
         result,
     }: {
         searchObject: JsonObj
         result: string[]
-    }) => {
+    }) {
         for (const key of Object.keys(searchObject)) {
             const searchDataValue = searchObject[key]
             if (
@@ -355,12 +454,4 @@ class Definition {
         }
         return ''
     }
-}
-
-export {
-    Definition,
-    type JsonType,
-    type JsonLiteral,
-    type JsonObj,
-    type KeyValue,
 }

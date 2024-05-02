@@ -1,25 +1,33 @@
 import { Extender } from '@/base/Extender'
 import * as defs from './apidefs'
-import { KeyValue } from '@/base/Definition'
+import { JsonObj } from '@/base/availableTypes'
 import { ExtendError } from '@/base/ExtendError'
+import { Definition } from '@/base/Definition'
 
 export class FavoExtend extends Extender {
-    constructor(env: {
-        UPSTASH_REDIS_REST_URL: string
-        UPSTASH_REDIS_REST_TOKEN: string
-    }) {
-        super(env, [
+    constructor(
+        env: {
+            UPSTASH_REDIS_REST_URL: string
+            UPSTASH_REDIS_REST_TOKEN: string
+        },
+        additionalDefs?: Definition[],
+    ) {
+        const Definitions = [
             defs.GetFavo,
             defs.GetUser,
             defs.PostFavoWithAuth,
             defs.PostUserEdit,
             defs.Login,
-        ])
+        ]
+        if (additionalDefs !== undefined) {
+            Definitions.push(...additionalDefs)
+        }
+        super(env, Definitions)
 
         // Register your extend functions
         this.addMethod({
             auth: {
-                kind: 'methodOnly',
+                kind: 'method',
                 function: this.auth,
             },
             generateToken: {
@@ -34,10 +42,11 @@ export class FavoExtend extends Extender {
      * @param opts.verifySrc compare value A
      * @param opts.verifyDist compare value B
      */
-    auth = async (opts?: KeyValue): Promise<undefined> => {
+    auth = async (opts?: JsonObj): Promise<undefined> => {
         try {
             // when you define function, recommend validation
-            this.inputsValidation({ opts })
+
+            console.debug(`DEBUG: opts=${JSON.stringify(opts)}`)
             if (
                 typeof opts === 'undefined' ||
                 typeof opts['verifySrc'] === 'undefined' ||
@@ -53,7 +62,7 @@ export class FavoExtend extends Extender {
             const decodedSavedPw = opts['verifyDist']
             if (decodedSavedPw !== decodedVerifyPw) {
                 throw new ExtendError({
-                    message: 'Password is incorrect',
+                    message: 'Authentication Failed',
                     status: 400,
                     name: 'Authentication Failed',
                 })
@@ -80,7 +89,7 @@ export class FavoExtend extends Extender {
     generateToken = async (key: string): Promise<string> => {
         try {
             // when you define function, recommend validation
-            this.inputsValidation({ key })
+            this.verifyKey(key)
             const token = crypto.randomUUID()
             const result: string | null = await this.Redis.set(key, token, {
                 ex: 3600 * 24 * 7,

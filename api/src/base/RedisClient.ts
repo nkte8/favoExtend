@@ -1,9 +1,14 @@
 import { Redis } from '@upstash/redis/cloudflare'
 import { z } from 'zod'
-import { JsonObj, JsonType, KeyValue } from './Definition'
 import { ExtendError } from './ExtendError'
+import {
+    JsonType,
+    JsonObj,
+    JsonTypeNullAble,
+    // OptValue,
+} from './availableTypes'
 
-class RedisClient {
+export class RedisClient {
     // Redis directry client
     protected Redis: Redis
     constructor(env: {
@@ -13,15 +18,42 @@ class RedisClient {
         this.Redis = Redis.fromEnv(env)
     }
 
-    protected inputsValidation = <T>({
-        key,
-        // value,
-        // opts,
-    }: {
-        key?: string
-        value?: T
-        opts?: KeyValue
-    }): void => {
+    protected replaceNullToUndefined(
+        input: JsonTypeNullAble | Exclude<JsonTypeNullAble | undefined, 'null'>,
+    ): JsonType {
+        if (input === null) {
+            return undefined
+        }
+        if (Array.isArray(input)) {
+            const x = input.map((value) => (value !== null ? value : undefined))
+            return x.map((value) => this.replaceNullToUndefined(value))
+        }
+        if (typeof input !== 'object') {
+            return input
+        }
+        const result: JsonObj = {}
+        Object.keys(input).map((key) => {
+            result[key] = this.replaceNullToUndefined(input[key])
+        })
+        return result
+    }
+
+    protected verifyParameter<T>(badopts: unknown, use: z.ZodSchema<T>) {
+        try {
+            return use.parse(badopts)
+        } catch (e: unknown) {
+            if (e instanceof z.ZodError) {
+                throw new ExtendError({
+                    message: `${e.name}`,
+                    status: 500,
+                    name: 'Invalid Opts',
+                })
+            }
+            throw new Error('Unexpected Error at verifyParameter')
+        }
+    }
+
+    protected verifyKey = async (key?: string) => {
         const invalidKeyPatternRegex = new RegExp(/\/{2,}/)
         if (typeof key !== 'undefined' && invalidKeyPatternRegex.test(key)) {
             throw new ExtendError({
@@ -30,14 +62,15 @@ class RedisClient {
                 name: 'Invalid Key',
             })
         }
+        return
     }
 
-    /** del: delete DB key.
+    /** del: Delete DB key.
      * @param key DB key
      */
     del = async (key: string): Promise<undefined> => {
         try {
-            this.inputsValidation({ key })
+            this.verifyKey(key)
             await this.Redis.del(key)
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
@@ -49,7 +82,7 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at del')
         }
     }
 
@@ -59,7 +92,7 @@ class RedisClient {
      */
     incr = async (key: string): Promise<number> => {
         try {
-            this.inputsValidation({ key })
+            this.verifyKey(key)
             return await this.Redis.incr(key)
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
@@ -71,53 +104,17 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at incr')
         }
     }
 
     /**
-     * scanMget: scan pattern, return values
-     * @param pattern Glob-style pattern.
-     */
-    scanMget = async (pattern: string): Promise<JsonType> => {
-        try {
-            this.inputsValidation({ key: pattern })
-            // search pattern
-            const [_, keys] = await this.Redis.scan(0, {
-                match: pattern,
-            })
-            // if no keys found throw error
-            if (keys.length <= 0) {
-                throw new ExtendError({
-                    message: `No found keypattern: ${pattern}`,
-                    status: 500,
-                    name: 'KeyScan Failed',
-                })
-            }
-            const values: JsonType[] = await this.Redis.mget(keys)
-            // console.debug(`DEBUG: ${JSON.stringify(values)}`)
-            return values
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error')
-        }
-    }
-
-    /**
-     * incrSum: return increment sum.
+     * incrSum: Return increment sum.
      * @param pattern Glob-style pattern.
      */
     incrSum = async (pattern: string): Promise<number> => {
         try {
-            this.inputsValidation({ key: pattern })
+            this.verifyKey(pattern)
             // search pattern
             const [_, keys] = await this.Redis.scan(0, {
                 match: pattern,
@@ -133,8 +130,9 @@ class RedisClient {
             const values: unknown[] = await this.Redis.mget(keys)
             const tasksSafeParse = Promise.allSettled(
                 values.map((value: unknown, index) => {
-                    if (z.number().safeParse(value).success) {
-                        return z.number().parse(value)
+                    const safeParsed = z.number().safeParse(value)
+                    if (safeParsed.success) {
+                        return safeParsed.data
                     } else {
                         throw new ExtendError({
                             message: `${keys[index]} is not number`,
@@ -162,19 +160,19 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at incrSum')
         }
     }
 
     /**
-     * incrSumUndefinedAble: return increment sum. if no item found, return undefined
+     * incrSumUndefinedAble: Return increment sum. if no item found, return undefined
      * @param pattern Glob-style pattern.
      */
     incrSumUndefinedAble = async (
         pattern: string,
     ): Promise<number | undefined> => {
         try {
-            this.inputsValidation({ key: pattern })
+            this.verifyKey(pattern)
             // search pattern
             const [_, keys] = await this.Redis.scan(0, {
                 match: pattern,
@@ -186,8 +184,9 @@ class RedisClient {
             const values: unknown[] = await this.Redis.mget(keys)
             const tasksSafeParse = Promise.allSettled(
                 values.map((value: unknown) => {
-                    if (z.number().safeParse(value).success) {
-                        return z.number().parse(value)
+                    const safeParsed = z.number().safeParse(value)
+                    if (safeParsed.success) {
+                        return safeParsed.data
                     } else {
                         return undefined
                     }
@@ -200,9 +199,8 @@ class RedisClient {
                     typeof x.value !== 'undefined'
                 ) {
                     return a + x.value
-                } else {
-                    return a
                 }
+                return a
             }, 0)
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
@@ -214,16 +212,16 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at incrSumUndefinedAble')
         }
     }
 
-    /** get: read DB. if value not found, throw error.
+    /** get: Read DB. if value not found, throw error.
      * @param key DB key
      */
     get = async (key: string): Promise<string> => {
         try {
-            this.inputsValidation({ key })
+            this.verifyKey(key)
             const value: string | null = await this.Redis.get(key)
             if (value === null || typeof value === 'undefined') {
                 throw new ExtendError({
@@ -241,17 +239,49 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at get')
         }
     }
 
-    /** getUndefinedAble: read DB. if value not found, return undefined
+    /** mget: Read DB. if value not found, throw error.
+     * @param key DB key
+     */
+    mget = async (key: string[]): Promise<string[]> => {
+        try {
+            const value: (string | null)[] = await this.Redis.mget(key)
+            const result = value.reduce<string[]>((nval, value) => {
+                if (value !== null) {
+                    nval.push(value)
+                }
+                return nval
+            },[])
+            if (result.length === 0) {
+                throw new ExtendError({
+                    message: `Data not found.`,
+                    status: 404,
+                    name: 'Not Found',
+                })
+            }
+            return result
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at mget')
+        }
+    }
+
+    /** getUndefinedAble: Read DB. if value not found, return undefined
      * @param key DB key
      */
     getUndefinedAble = async (key: string): Promise<JsonType> => {
         try {
-            this.inputsValidation({ key })
-            const value: JsonType | null = await this.Redis.get(key)
+            this.verifyKey(key)
+            const value: string | null = await this.Redis.get(key)
             if (value === null) {
                 return undefined
             }
@@ -266,19 +296,36 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at getUndefinedAble')
         }
     }
 
-    /** set: write DB as string
+    /** set: Write DB as string
      * @param key DB key
      * @param value register DB value
-     * @param ttl set second when data disabled
+     * @param opts set options
      */
-    set = async (key: string, value: string): Promise<undefined> => {
+    set = async (
+        key: string,
+        value: string,
+        opts?: JsonObj,
+    ): Promise<undefined | string> => {
         try {
-            this.inputsValidation({ key, value })
-            const result: string | null = await this.Redis.set(key, value)
+            this.verifyKey(key)
+            const verifiedOpts = this.verifyParameter(
+                opts,
+                this.ZodSetCommandOptions,
+            )
+            const result: string | null = await this.Redis.set(
+                key,
+                value,
+                verifiedOpts,
+            )
+            // if get option true, allow return undefined
+            if (verifiedOpts?.get === true) {
+                return result !== null ? result : undefined
+            }
+            // if get option false or undefined, result shoud be OK
             if (result !== 'OK') {
                 throw new ExtendError({
                     message: `Failed to SET value by redis client`,
@@ -286,6 +333,7 @@ class RedisClient {
                     name: 'Write Failed',
                 })
             }
+            return
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
                 throw e
@@ -296,24 +344,30 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at set')
         }
     }
 
-    /** jsonGet: read db value of json data
+    /** jsonGet: Read db value of json data
      * @param key DB key
      * @param input register DB value
      * @param opts.path default '$', set get json path
      */
-    jsonGet = async (key: string, opts?: KeyValue): Promise<JsonType> => {
+    jsonGet = async (key: string, opts?: JsonObj): Promise<JsonType> => {
         try {
-            this.inputsValidation({ key, opts })
+            this.verifyKey(key)
+            const verifiedOpts = this.verifyParameter(
+                opts,
+                z.object({ path: z.string().default('$') }).or(z.undefined()),
+            )
             const path: string =
-                typeof opts !== 'undefined' &&
-                typeof opts['path'] !== 'undefined'
-                    ? opts['path']
+                typeof verifiedOpts?.path !== 'undefined'
+                    ? verifiedOpts.path
                     : '$'
-            const result: JsonType | null = await this.Redis.json.get(key, path)
+            const result: JsonTypeNullAble = await this.Redis.json.get(
+                key,
+                path,
+            )
             if (result === null || typeof result === 'undefined') {
                 throw new ExtendError({
                     message: `Data not found error`,
@@ -321,11 +375,15 @@ class RedisClient {
                     name: 'Not Found',
                 })
             }
+            console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            const parsedResult = this.replaceNullToUndefined(result)
+            console.debug(`DEBUG: parsedResult=${JSON.stringify(parsedResult)}`)
             // If result length = 1, return as single
-            if (Array.isArray(result) && result.length === 1) {
-                return result[0]
+            if (Array.isArray(parsedResult) && parsedResult.length === 1) {
+                const value = parsedResult[0]
+                return value !== null ? value : undefined
             }
-            return result
+            return parsedResult
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
                 throw e
@@ -336,11 +394,11 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at jsonGet')
         }
     }
 
-    /** jsonSet: write db value of json data
+    /** jsonSet: Write db value of json data
      * @param key DB key
      * @param input register DB value
      * @param opts.path default '$', set get json path
@@ -348,15 +406,19 @@ class RedisClient {
     jsonSet = async <T extends JsonObj>(
         key: string,
         value: T,
-        opts?: KeyValue,
+        opts?: JsonObj,
     ): Promise<undefined> => {
         try {
-            this.inputsValidation({ key, value, opts })
+            this.verifyKey(key)
+            const verifiedOpts = this.verifyParameter(
+                opts,
+                z.object({ path: z.string().default('$') }).or(z.undefined()),
+            )
             const path: string =
-                typeof opts !== 'undefined' &&
-                typeof opts['path'] !== 'undefined'
-                    ? opts['path']
+                typeof verifiedOpts?.path !== 'undefined'
+                    ? verifiedOpts.path
                     : '$'
+            // const registerValue = this.replaceUndefinedToNull(value)
             const result: string | null = await this.Redis.json.set(
                 key,
                 path,
@@ -379,9 +441,437 @@ class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error')
+            throw new Error('Unexpected Error at jsonSet')
         }
     }
-}
 
-export { RedisClient }
+    /** jsonDel: Delete db value of json data
+     * @param key DB key
+     * @param opts.path default '$', set get json path
+     */
+    jsonDel = async (key: string, opts?: JsonObj): Promise<undefined> => {
+        try {
+            this.verifyKey(key)
+            const verifiedOpts = this.verifyParameter(
+                opts,
+                z.object({ path: z.string().default('$') }).or(z.undefined()),
+            )
+            const path: string =
+                typeof verifiedOpts?.path !== 'undefined'
+                    ? verifiedOpts.path
+                    : '$'
+            const result = await this.Redis.json.del(key, path)
+            if (result === 0) {
+                throw new ExtendError({
+                    message: `No json data deleted`,
+                    status: 400,
+                    name: 'Not deleted',
+                })
+            }
+            return
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at jsonDel')
+        }
+    }
+
+    /**
+     * scan: Scan pattern, return key list
+     * @param pattern Glob-style pattern.
+     */
+    scan = async (pattern: string): Promise<string[]> => {
+        try {
+            this.verifyKey(pattern)
+            // search pattern
+            const [_, keys] = await this.Redis.scan(0, {
+                match: pattern,
+            })
+            // if no keys found throw error
+            if (keys.length <= 0) {
+                throw new ExtendError({
+                    message: `No found keypattern: ${pattern}`,
+                    status: 500,
+                    name: 'KeyScan Failed',
+                })
+            }
+            return keys
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at scan')
+        }
+    }
+
+    /**
+     * typeGrep: Scan pattern, return key list
+     * @param opts.keys
+     * @param opts.type
+     */
+    typeGrep = async (opts?: JsonObj): Promise<string[]> => {
+        try {
+            const verifiedOpts = this.verifyParameter(
+                opts,
+                z.object({
+                    keys: z.string().array(),
+                    type: this.ZodType,
+                }),
+            )
+            const result: string[] = []
+            await Promise.all(
+                verifiedOpts.keys.map(async (key) => {
+                    const currentType = await this.Redis.type(key)
+                    if (currentType === verifiedOpts.type) {
+                        result.push(key)
+                    }
+                }),
+            )
+            return result
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at typeGrep')
+        }
+    }
+
+    /**
+     * zadd: Add sortedSet
+     * @param key key
+     * @param values sortedSet list
+     * @param opts zadd options
+     * @returns
+     */
+    zadd = async (
+        key: string,
+        values: JsonType[],
+        opts?: JsonObj,
+    ): Promise<JsonType | undefined> => {
+        try {
+            this.verifyKey(key)
+            const verifiedOpts = this.verifyParameter(
+                opts,
+                this.ZodZaddCommandOptions,
+            )
+            const verifiedValues = this.verifyParameter(
+                values,
+                this.ZodSortedSet.array(),
+            )
+            let result: null | number | undefined
+            const verifiedFirst = verifiedValues.shift()
+            if (typeof verifiedFirst === 'undefined') {
+                return
+            }
+            if (verifiedOpts !== undefined) {
+                result = await this.Redis.zadd(
+                    key,
+                    verifiedOpts,
+                    verifiedFirst,
+                    ...verifiedValues,
+                )
+            } else {
+                result = await this.Redis.zadd(
+                    key,
+                    verifiedFirst,
+                    ...verifiedValues,
+                )
+            }
+
+            result = result !== null ? result : undefined
+            if (verifiedOpts?.incr === true) {
+                return result
+            }
+            return
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at zadd')
+        }
+    }
+    /**
+     * zrem: Remove value from sortedSet
+     * @param key key
+     * @param values sortedSet list
+     * @returns none
+     */
+    zrem = async (key: string, values: JsonType[]): Promise<undefined> => {
+        try {
+            this.verifyKey(key)
+            const verifiedValues = this.verifyParameter(
+                values,
+                this.ZodSortedSet.array(),
+            )
+            await this.Redis.zrem(key, verifiedValues)
+            return
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at zrem')
+        }
+    }
+
+    /**
+     * zrank: Return rank of item
+     * @param key key
+     * @param values sortedSet item name
+     * @returns rank number
+     */
+    zrank = async (key: string, value: string): Promise<number | undefined> => {
+        try {
+            this.verifyKey(key)
+            const result = await this.Redis.zrank(key, value)
+            return result !== null ? result : undefined
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at zrank')
+        }
+    }
+
+    /**
+     * zrank: Return list with ACS by score
+     * @param key key
+     * @param input.min start index
+     * @param input.max end index
+     * @returns sorted list of value
+     */
+    zrange = async (
+        key: string,
+        values: JsonObj,
+        opts?: JsonObj,
+    ): Promise<JsonType> => {
+        try {
+            this.verifyKey(key)
+            const verifiedValues = this.verifyParameter(
+                values,
+                z.object({
+                    min: z.number().default(0),
+                    max: z.number().default(-1),
+                }),
+            )
+            const verifiedOpts = this.verifyParameter(
+                opts,
+                this.ZodZRangeCommandOptions,
+            )
+            // if undefined, will it replaced by default, so never undefined
+            const result: JsonType[] = await this.Redis.zrange(
+                key,
+                verifiedValues.min!,
+                verifiedValues.max!,
+                verifiedOpts,
+            )
+            return result !== null ? result : undefined
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at zrange')
+        }
+    }
+
+    protected ZodNXAndXXOptions = z
+        .object({
+            nx: z.literal(true),
+            xx: z.never().optional(),
+        })
+        .or(
+            z.object({
+                nx: z.never().optional(),
+                xx: z.literal(true),
+            }),
+        )
+        .or(
+            z.object({
+                xx: z.never().optional(),
+                nx: z.never().optional(),
+            }),
+        )
+    protected ZodLTAndGTOptions = z
+        .object({
+            lt: z.literal(true),
+            gt: z.never().optional(),
+        })
+        .or(
+            z.object({
+                lt: z.literal(true),
+                gt: z.never().optional(),
+            }),
+        )
+        .or(
+            z.object({
+                lt: z.never().optional(),
+                gt: z.never().optional(),
+            }),
+        )
+
+    protected ZodSetCommandOptions = z
+        .object({ get: z.boolean().optional() })
+        .and(
+            z
+                .object({
+                    ex: z.number(),
+                    px: z.never().optional(),
+                    exat: z.never().optional(),
+                    pxat: z.never().optional(),
+                    keepTtl: z.never().optional(),
+                })
+                .or(
+                    z.object({
+                        ex: z.never().optional(),
+                        px: z.number(),
+                        exat: z.never().optional(),
+                        pxat: z.never().optional(),
+                        keepTtl: z.never().optional(),
+                    }),
+                )
+                .or(
+                    z.object({
+                        ex: z.never().optional(),
+                        px: z.never().optional(),
+                        exat: z.number(),
+                        pxat: z.never().optional(),
+                        keepTtl: z.never().optional(),
+                    }),
+                )
+                .or(
+                    z.object({
+                        ex: z.never().optional(),
+                        px: z.never().optional(),
+                        exat: z.never().optional(),
+                        pxat: z.number(),
+                        keepTtl: z.never().optional(),
+                    }),
+                )
+                .or(
+                    z.object({
+                        ex: z.never().optional(),
+                        px: z.never().optional(),
+                        exat: z.never().optional(),
+                        pxat: z.never().optional(),
+                        keepTtl: z.literal(true),
+                    }),
+                )
+                .or(
+                    z.object({
+                        ex: z.never().optional(),
+                        px: z.never().optional(),
+                        exat: z.never().optional(),
+                        pxat: z.never().optional(),
+                        keepTtl: z.never().optional(),
+                    }),
+                ),
+        )
+        .and(this.ZodNXAndXXOptions)
+        .optional()
+    protected ZodZaddCommandOptions = this.ZodNXAndXXOptions.and(
+        this.ZodLTAndGTOptions,
+    )
+        .and(
+            z.object({
+                ch: z.literal(true).optional(),
+            }),
+        )
+        .and(
+            z.object({
+                incr: z.literal(true).optional(),
+            }),
+        )
+        .optional()
+    protected ZodSortedSet = z.object({
+        score: z.number(),
+        member: z.string(),
+    })
+    protected ZodZRangeCommandOptions = z
+        .object({
+            withScores: z.boolean().optional(),
+            rev: z.boolean().optional(),
+        })
+        .and(
+            z
+                .object({
+                    byScore: z.literal(true),
+                    byLex: z.never().optional(),
+                })
+                .or(
+                    z.object({
+                        byScore: z.never().optional(),
+                        byLex: z.literal(true),
+                    }),
+                )
+                .or(
+                    z.object({
+                        byScore: z.never().optional(),
+                        byLex: z.never().optional(),
+                    }),
+                ),
+        )
+        .and(
+            z
+                .object({
+                    offset: z.number(),
+                    count: z.number(),
+                })
+                .or(
+                    z.object({
+                        offset: z.never().optional(),
+                        count: z.never().optional(),
+                    }),
+                ),
+        )
+        .optional()
+
+    protected ZodType = z
+        .literal('string')
+        .or(z.literal('set'))
+        .or(z.literal('list'))
+        .or(z.literal('zset'))
+        .or(z.literal('hash'))
+        .or(z.literal('none'))
+}
