@@ -158,13 +158,13 @@ export class RedisExtend extends RedisClient {
 
     /**
      * typeGrep: Scan pattern, return key list
-     * @param opts.keys
-     * @param opts.type
+     * @param input.keys
+     * @param input.type
      */
-    typeGrep = async (opts?: JsonObj): Promise<string[]> => {
+    typeGrep = async (input: JsonObj): Promise<string[]> => {
         try {
             const verifiedOpts = this.verifyParameter(
-                opts,
+                input,
                 z.object({
                     keys: z.string().array(),
                     type: this.ZodType,

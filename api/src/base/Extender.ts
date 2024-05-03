@@ -23,11 +23,11 @@ export class Extender extends ExtenderBase {
         // Register your extend functions
         this.addMethod({
             objectExtract: {
-                kind: 'method',
+                kind: "objectNokey",
                 function: this.objectExtract,
             },
             arrayReplace: {
-                kind: 'method',
+                kind: 'objectNokey',
                 function: this.arrayReplace,
             },
             defineRef: {
@@ -52,11 +52,11 @@ export class Extender extends ExtenderBase {
      *   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
      * @returns sortedSet of value
      */
-    arrayReplace = async (opts?: JsonObj): Promise<JsonType> => {
+    arrayReplace = async (input: JsonObj): Promise<JsonType> => {
         try {
             // console.debug(`DEBUG: opts=${JSON.stringify(opts)}`)
             const verifiedOpts = this.verifyParameter(
-                opts,
+                input,
                 z.object({
                     array: z.string().array(),
                     regex: z.string(),
@@ -90,9 +90,9 @@ export class Extender extends ExtenderBase {
      * @param opts Array of object with key
      * @returns merged object array
      */
-    objectExtract = async (opts?: JsonObj): Promise<JsonType> => {
+    objectExtract = async (input: JsonObj): Promise<JsonType> => {
         try {
-            if (typeof opts === 'undefined') {
+            if (typeof input === 'undefined') {
                 throw new ExtendError({
                     message: `Input object of allay to opts`,
                     status: 500,
@@ -100,17 +100,17 @@ export class Extender extends ExtenderBase {
                 })
             }
             // verification
-            const keys: string[] = Object.keys(opts)
+            const keys: string[] = Object.keys(input)
             const inputArrays = keys.map((key) => {
-                const input = opts[key]
-                if (!Array.isArray(input)) {
+                const value = input[key]
+                if (!Array.isArray(value)) {
                     throw new ExtendError({
                         message: `Opts include not array, error key: ${key}`,
                         status: 500,
                         name: 'Invalid input',
                     })
                 }
-                return input
+                return value
             })
             // console.debug(`DEBUG: ${JSON.stringify(inputArrays)}`)
             const length = inputArrays[0].length

@@ -16,7 +16,7 @@ export const TestGetTokens = new Definition(
         {
             functionName: 'typeGrep',
             output: z.string().array(),
-            opts: {
+            input: {
                 keys: '${#0}',
                 type: 'string',
             },
@@ -44,7 +44,7 @@ export const TestGetUsers = new Definition(
         {
             functionName: 'typeGrep',
             output: z.string().array(),
-            opts: {
+            input: {
                 keys: '${#0}',
                 type: 'json',
             },
@@ -146,7 +146,7 @@ export const TestRmRankingAllUser = new Definition(
         },
         {
             functionName: 'arrayReplace',
-            opts: {
+            input: {
                 array: '${#0}',
                 regex: '^user\\/([^${}]*)',
                 replace: '$1',
@@ -175,7 +175,7 @@ export const TestAddRankingAllUser = new Definition(
         },
         {
             functionName: 'arrayReplace',
-            opts: {
+            input: {
                 array: '${#0}',
                 regex: '.*',
                 replace: '$&/*',
@@ -189,7 +189,7 @@ export const TestAddRankingAllUser = new Definition(
         },
         {
             functionName: 'arrayReplace',
-            opts: {
+            input: {
                 array: '${#0}',
                 regex: '^user\\/([^${}]*)',
                 replace: '$1',
@@ -198,7 +198,7 @@ export const TestAddRankingAllUser = new Definition(
         },
         {
             functionName: 'objectExtract',
-            opts: {
+            input: {
                 score: '${#2}',
                 member: '${#3}',
             },

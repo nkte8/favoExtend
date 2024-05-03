@@ -527,7 +527,7 @@ export class ExtenderBase extends RedisExtend {
             function: this.incrSumMultiKeys,
         },
         typeGrep: {
-            kind: 'method',
+            kind: "objectNokey",
             function: this.typeGrep,
         },
         zaddSingle: {
