@@ -35,7 +35,7 @@ export class Extender extends ExtenderBase {
                 function: this.defineRef,
             },
             numSum: {
-                kind: "arrayNokey",
+                kind: 'arrayNokey',
                 function: this.numSum,
             },
             numAvg: {
@@ -63,12 +63,14 @@ export class Extender extends ExtenderBase {
                     replace: z.string(),
                 }),
             )
-            const result = verifiedOpts.array.map((value) =>
-                value.replace(
-                    new RegExp(verifiedOpts.regex, 'g'),
+            const result = verifiedOpts.array.map((value) => {
+                const replaced = value.replace(
+                    new RegExp(verifiedOpts.regex),
                     verifiedOpts.replace,
-                ),
-            )
+                )
+                // console.debug(`DEBUG: replaced=${JSON.stringify(replaced)}`)
+                return replaced
+            })
             // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
             return result
         } catch (e: unknown) {

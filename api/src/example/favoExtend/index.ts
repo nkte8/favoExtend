@@ -1,6 +1,6 @@
-import { Extender } from "@/base/Extender"
+import { Extender } from '@/base/Extender'
 import * as defs from './apidefs'
-import { JsonObj, JsonType } from '@/base/availableTypes'
+import { JsonObj } from '@/base/availableTypes'
 import { ExtendError } from '@/base/ExtendError'
 import { Definition } from '@/base/Definition'
 
@@ -33,10 +33,6 @@ export class FavoExtend extends Extender {
             generateToken: {
                 kind: 'keyOnly',
                 function: this.generateToken,
-            },
-            incrSumMultiKeys: {
-                kind: 'multiKey',
-                function: this.incrSumMultiKeys,
             },
         })
     }
@@ -106,33 +102,6 @@ export class FavoExtend extends Extender {
                 })
             }
             return token
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error')
-        }
-    }
-
-    incrSumMultiKeys = async (keys: string[]): Promise<JsonType[]> => {
-        try {
-            const result = await Promise.all(
-                keys.map(async (key) => {
-                    const count = await this.incrSum(`${key}/*`)
-                    if (typeof count === "undefined") {
-                        return 0
-                    }
-                    return count
-                }),
-            )
-            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
-            return result
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
                 throw e

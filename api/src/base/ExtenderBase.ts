@@ -522,6 +522,10 @@ export class ExtenderBase extends RedisExtend {
             kind: 'keyOnly',
             function: this.incrSum,
         },
+        incrSumMultiKeys: {
+            kind: 'multiKey',
+            function: this.incrSumMultiKeys,
+        },
         typeGrep: {
             kind: 'method',
             function: this.typeGrep,

@@ -126,6 +126,37 @@ export class RedisExtend extends RedisClient {
         }
     }
     /**
+     * incrSumMultiKeys: Return increment sum.
+     * @param keys keyPattern array
+     */
+    incrSumMultiKeys = async (keys: string[]): Promise<JsonType[]> => {
+        try {
+            const result = await Promise.all(
+                keys.map(async (key) => {
+                    const count = await this.incrSum(key)
+                    if (typeof count === "undefined") {
+                        return 0
+                    }
+                    return count
+                }),
+            )
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            return result
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at incrSumMultiKeys')
+        }
+    }
+
+    /**
      * typeGrep: Scan pattern, return key list
      * @param opts.keys
      * @param opts.type

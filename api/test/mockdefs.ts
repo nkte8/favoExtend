@@ -174,8 +174,17 @@ export const TestAddRankingAllUser = new Definition(
             output: z.string().array(),
         },
         {
+            functionName: 'arrayReplace',
+            opts: {
+                array: '${#0}',
+                regex: '.*',
+                replace: '$&/*',
+            },
+            output: z.string().array(),
+        },
+        {
             functionName: 'incrSumMultiKeys',
-            multiKeysRef: '${#0}',
+            multiKeysRef: '${#1}',
             output: z.number().array(),
         },
         {
@@ -190,8 +199,8 @@ export const TestAddRankingAllUser = new Definition(
         {
             functionName: 'objectExtract',
             opts: {
-                score: '${#1}',
-                member: '${#2}',
+                score: '${#2}',
+                member: '${#3}',
             },
             output: z
                 .object({
@@ -203,7 +212,7 @@ export const TestAddRankingAllUser = new Definition(
         {
             keyRef: 'rank/favo',
             functionName: 'zadd',
-            input: '${#3}',
+            input: '${#4}',
         },
     ],
 )
@@ -263,7 +272,7 @@ export const TestValuesToHalf = new Definition(
     [
         {
             functionName: 'numSum',
-            input: "${#}",
+            input: '${#}',
             output: z.number(),
         },
         {
