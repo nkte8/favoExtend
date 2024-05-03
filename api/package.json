@@ -1,6 +1,6 @@
 {
-  "name": "api",
-  "version": "0.0.0",
+  "name": "favoextend",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "wrangler dev",
@@ -9,6 +9,7 @@
   },
   "type": "module",
   "devDependencies": {
+    "@changesets/cli": "^2.27.1",
     "@cloudflare/vitest-pool-workers": "^0.1.0",
     "@cloudflare/workers-types": "^4.20240405.0",
     "@typescript-eslint/eslint-plugin": "^7.7.0",
