@@ -65,7 +65,7 @@ export class Extender extends ExtenderBase {
             )
             const result = verifiedOpts.array.map((value) => {
                 const replaced = value.replace(
-                    new RegExp(verifiedOpts.regex),
+                    new RegExp(verifiedOpts.regex, 'g'),
                     verifiedOpts.replace,
                 )
                 // console.debug(`DEBUG: replaced=${JSON.stringify(replaced)}`)
