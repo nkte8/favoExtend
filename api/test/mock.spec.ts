@@ -20,6 +20,7 @@ const MockClient = new FavoExtend(env, [
     defs.TestRmRankingAllUser,
     defs.TestAddRankingAllUser,
     defs.TestRedefine,
+    defs.TestRedefine2,
 ])
 
 const sleep = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
@@ -159,6 +160,18 @@ describe('API test', () => {
         expect(apiResult).toMatchObject({
             key1: 'value1',
             key2: 'value2',
+        })
+    })
+    it('[Positive] Redefine test2', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'GET',
+            requestUrl: new URL(
+                'https://example.com/redefine2?value1=hoge&value2=fuga&value3=hogefuga',
+            ),
+        })
+        expect(apiResult).toMatchObject({
+            value: 'hoge',
+            array: expect.arrayContaining(['fuga', 'hogefuga']),
         })
     })
 })

@@ -46,7 +46,7 @@ export class RedisExtend extends RedisClient {
             const [_, keys] = await this.Redis.scan(0, {
                 match: '*',
             })
-            console.debug(`DEBUG: regex=${regex}`)
+            // console.debug(`DEBUG: regex=${regex}`)
             const selectedKeys = keys.reduce<string[]>((nval, key) => {
                 if (RegExp(regex, 'g').test(key)) {
                     nval.push(key)
@@ -86,7 +86,7 @@ export class RedisExtend extends RedisClient {
             const [_, keys] = await this.Redis.scan(0, {
                 match: pattern,
             })
-            console.debug(`DEBUG: pattern=${pattern} keys=${keys}`)
+            // console.debug(`DEBUG: pattern=${pattern} keys=${keys}`)
             // if no keys found, return init value
             if (keys.length <= 0) {
                 return undefined

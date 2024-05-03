@@ -131,7 +131,7 @@ export class FavoExtend extends Extender {
                     return count
                 }),
             )
-            console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
             return result
         } catch (e: unknown) {
             if (e instanceof ExtendError) {

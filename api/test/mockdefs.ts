@@ -211,19 +211,44 @@ export const TestRedefine = new Definition(
     {
         path: '/redefine',
         method: 'GET',
-        output: "${#0}"
+        output: '${#0}',
     },
     [
         {
             functionName: 'defineRef',
             input: {
-                key1: "value1",
-                key2: "value2",
+                key1: 'value1',
+                key2: 'value2',
             },
             output: z.object({
                 key1: z.string(),
-                key2: z.string()
-            })
+                key2: z.string(),
+            }),
+        },
+    ],
+)
+export const TestRedefine2 = new Definition(
+    {
+        path: '/redefine2',
+        method: 'GET',
+        query: z.object({
+            value1: z.string(),
+            value2: z.string(),
+            value3: z.string(),
+        }),
+        output: '${#0}',
+    },
+    [
+        {
+            functionName: 'defineRef',
+            input: {
+                value: '${#.value1}',
+                array: ['${#.value2}', '${#.value3}'],
+            },
+            output: z.object({
+                value: z.string(),
+                array: z.string().array(),
+            }),
         },
     ],
 )

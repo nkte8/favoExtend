@@ -8,6 +8,7 @@ type RelationType =
     | string
     | number
     | boolean
+    | RelationType[]
 
 type ApiDef = {
     path: string
@@ -155,7 +156,7 @@ export class Definition {
     }: {
         relationData: RelationType
         inputData: JsonType
-    }) {
+    }): Promise<JsonType> {
         // console.debug(`DEBUG: relationData=${JSON.stringify(relationData)}`)
         // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
         const result: JsonType = {}
@@ -175,7 +176,7 @@ export class Definition {
             // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
             const refMarker = matchedArray[0][1]
             // if no refMaker return
-            if (refMarker === ""){
+            if (refMarker === '') {
                 return relationData
             }
             const refValue = this.getValueFromObjectByRef({
@@ -187,6 +188,17 @@ export class Definition {
         }
         if (typeof relationData !== 'object') {
             return relationData
+        }
+        if (Array.isArray(relationData)) {
+            const currentRelation = await Promise.all(
+                relationData.map(async (value) => {
+                    return await this.replaceRelationTypeToInputAbleData({
+                        relationData: value,
+                        inputData,
+                    })
+                }),
+            )
+            return currentRelation
         }
 
         Object.keys(relationData).map(async (key) => {
@@ -419,10 +431,7 @@ export class Definition {
                         name: 'Invalid ref definition',
                     })
                 }
-                dbKeyRef = dbKeyRef.replace(
-                    value[0],
-                    inputData,
-                )
+                dbKeyRef = dbKeyRef.replace(value[0], inputData)
                 // console.debug(`DEBUG: dbKeyRef=${dbKeyRef}`)
             }),
         )
