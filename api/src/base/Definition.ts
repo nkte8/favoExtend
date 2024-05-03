@@ -17,7 +17,7 @@ type ApiDef = {
     output?: RelationType
 }
 type RedisDef = {
-    keyPattern: string
+    keyRef: string
     multiKeysRef: string
     functionName: string
     input?: RelationType
@@ -44,19 +44,19 @@ export class Definition {
     /**
      * Create API Definition
      * @param apiDef set { path, method, input, query, output }
-     * @param dbDefs set [{ keyPattern, functionName, input, output, ignoreFail, ignoreOutput, dependFunc, opts }]
+     * @param dbDefs set [{ keyRef, functionName, input, output, ignoreFail, ignoreOutput, dependFunc, opts }]
      */
     constructor(
         apiDef: ApiDef,
         dbDefs: UnRequire<
             RedisDef,
-            'keyPattern' | 'multiKeysRef' | 'ignoreFail' | 'ignoreOutput'
+            'keyRef' | 'multiKeysRef' | 'ignoreFail' | 'ignoreOutput'
         >[],
     ) {
         this.apiDef = apiDef
         const dbdef = dbDefs.map((value) => {
-            if (typeof value.keyPattern === 'undefined') {
-                value.keyPattern = ''
+            if (typeof value.keyRef === 'undefined') {
+                value.keyRef = ''
             }
             if (typeof value.ignoreFail === 'undefined') {
                 value.ignoreFail = false
@@ -349,7 +349,7 @@ export class Definition {
                     refMarker: matchedRef,
                     searchData: apiInput,
                 })
-                // if inputData is not defined, not edit dbkeyPattern
+                // if inputData is not defined, not edit dbKeyRef
                 if (typeof inputData === 'undefined') {
                     return
                 }
@@ -383,17 +383,17 @@ export class Definition {
         return result
     }
 
-    async redisKeyPatternToKey({
+    async rediskeyRefToKey({
         apiInput,
-        dbKeyPattern,
+        dbKeyRef,
     }: {
         apiInput: JsonType
-        dbKeyPattern: string
+        dbKeyRef: string
     }): Promise<string> {
-        const matchedArray = [...dbKeyPattern.matchAll(this.refRegex)]
+        const matchedArray = [...dbKeyRef.matchAll(this.refRegex)]
 
         if (typeof apiInput === 'undefined') {
-            return dbKeyPattern
+            return dbKeyRef
         }
         // console.debug(
         //     `DEBUG: apiInput=${JSON.stringify(apiInput)}`,
@@ -407,26 +407,26 @@ export class Definition {
                     refMarker: matchedRef,
                     searchData: apiInput,
                 })
-                // if inputData is not defined, not edit dbkeyPattern
+                // if inputData is not defined, not edit dbKeyRef
                 if (typeof inputData === 'undefined') {
                     return
                 }
                 if (typeof inputData !== 'string') {
                     throw new ExtendError({
                         message:
-                            'keyPattern definition seems contain not string ref',
+                            'keyRef definition seems contain not string ref',
                         status: 500,
                         name: 'Invalid ref definition',
                     })
                 }
-                dbKeyPattern = dbKeyPattern.replace(
+                dbKeyRef = dbKeyRef.replace(
                     value[0],
                     inputData,
                 )
-                // console.debug(`DEBUG: dbKeyPattern=${dbKeyPattern}`)
+                // console.debug(`DEBUG: dbKeyRef=${dbKeyRef}`)
             }),
         )
-        return dbKeyPattern
+        return dbKeyRef
     }
 
     /**

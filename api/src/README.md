@@ -19,7 +19,7 @@ export const GetFavo = new Definition(
     // Here is Redis DB Actions
     [
         {
-            keyPattern: 'favo/{id}',
+            keyRef: 'favo/{id}',
             functionName: 'getUndefinedAble',
             output: z.number().default(0),
         },
@@ -38,24 +38,24 @@ By default, you cau use these `functionName` below.
 | --- | --- |
 | del | [upstash DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/del). delete DB value. |
 | incr | [upstash INCR wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/incr). incriment DB value. |
-| incrSum | Get sum of DB values. Input keyPattern like `value/*` and return sum. If collected values contain not-number, skip value. |
-| get | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, throw Error. |
+| incrSum | Get sum of DB values. Input keyRef like `value/*` and return sum. If collected values contain not-number, skip value. |
 | mget | [upstash MGET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/mget). get DB values as string by Multikeys. if not string, skip value. |
-| getUndefinedAble | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, return undefined. |
+| get | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, return undefined. |
+| getThrowError | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, throw Error. |
 | set | [upstash SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/set). set string value to DB. |
 | jsonGet | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. if not json, skip value. |
 | jsonMget | [upstash JSON.MGET wrapper](https://upstash.com/docs/oss/sdks/py/redis/commands/json/mget). get values to json data from DB by Multikeys. if not json, skip value. |
 | jsonSet | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. |
 | jsonDel | [upstash JSON.DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/del). del value to json data from DB. |
-| scan | Get all string values with key-pattern matched. If no keys matched, throw Error. |
+| scan | [upstash SCAN wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/scan). Get all string values with key-pattern matched. If no keys matched, throw Error. |
 | typeGrep | Pick keys by type from key array |
-| zadd | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add single item |
-| zaddArray | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add multi items |
-| zadd | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem), remove single item |
-| zremArray | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem), remove multi items |
-| zrank | [upstash ZRANK wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrank) |
-| zrevrank | [upstash ZREVRANK wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrevrank) |
-| zrange | [upstash ZRANGE wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrange) |
+| zadd | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add multi items |
+| zaddSingle | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add single item |
+| zrem | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem), remove multi items |
+| zremSingle | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem), remove single item |
+| zrank | [upstash ZRANK wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrank), return current rank(low-high) of member. |
+| zrevrank | [upstash ZREVRANK wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrevrank), return current rank(high-low) of member. |
+| zrange | [upstash ZRANGE wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrange), return ranking, part of value or all. |
 
 Also you can use methods not control redis.
 

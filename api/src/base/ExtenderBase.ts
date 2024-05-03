@@ -1,14 +1,13 @@
 import { Definition, Invalid } from './Definition'
-import { RedisClient } from './RedisClient'
 import { ExtendError } from './ExtendError'
 import { JsonType, JsonObj } from './availableTypes'
-
+import { RedisExtend } from './RedisExtend'
 
 export class Ignored {
     // Use Ignored Status Unique Type
 }
 
-export class ExtenderBase extends RedisClient {
+export class ExtenderBase extends RedisExtend {
     private Definitions: Definition[]
     constructor(
         env: {
@@ -103,9 +102,9 @@ export class ExtenderBase extends RedisClient {
             )
             // console.debug(`DEBUG: requestInput=${JSON.stringify(requestInput)}`)
             const dbInput = await Promise.all([
-                Definicator.redisKeyPatternToKey({
+                Definicator.rediskeyRefToKey({
                     apiInput: requestInput,
-                    dbKeyPattern: dbDef.keyPattern,
+                    dbKeyRef: dbDef.keyRef,
                 }),
                 Definicator.apiInputToRedisInput({
                     inputData: requestInput,
@@ -122,28 +121,28 @@ export class ExtenderBase extends RedisClient {
             ])
             // console.debug(`DEBUG: dbInput=${JSON.stringify(dbInput)}`)
 
-            // if keyPattern is left, process skip
-            const keyPatternVerify = [...dbInput[0].matchAll(/{([^{}]*)}/g)]
-            if (keyPatternVerify.length > 0) {
+            // if keyRef is left, process skip
+            const keyRefVerify = [...dbInput[0].matchAll(/{([^{}]*)}/g)]
+            if (keyRefVerify.length > 0) {
                 if (dbDef.ignoreFail === true) {
-                    // console.debug(`DEBUG: #${index} ignored. keyPattern invalid`)
+                    // console.debug(`DEBUG: #${index} ignored. keyRef invalid`)
                     definicatorRunResult.push(new Ignored())
                     continue
                 }
                 throw new ExtendError({
                     message:
-                        'keyPattern definition seems contain undefined parameter',
+                        'keyRef definition seems contain undefined parameter',
                     status: 500,
                     name: 'Invalid ref definition',
                 })
             }
 
-            const dbFunctionKeypattern = dbInput[0]
+            const dbFunctionKeyRef = dbInput[0]
             const dbFunctionInput = dbInput[1]
             const dbFunctionOpts = dbInput[2]
             const multiKeysRef = dbInput[3]
             // console.debug(
-            //     `DEBUG: keyPattern={${dbFunctionKeypattern}}, input={${JSON.stringify(
+            //     `DEBUG: keyRef={${dbFunctionKeyRef}}, input={${JSON.stringify(
             //         dbFunctionInput,
             //     )}}, opts=${JSON.stringify(dbFunctionOpts)}`,
             // )
@@ -164,15 +163,15 @@ export class ExtenderBase extends RedisClient {
                     apiDefinedMethod.kind === 'method' ||
                     apiDefinedMethod.kind === 'multiKey'
                 ) &&
-                dbFunctionKeypattern === ''
+                dbFunctionKeyRef === ''
             ) {
                 if (dbDef.ignoreFail === true) {
-                    // console.debug(`DEBUG: #${index} ignored. keyPattern undefined`)
+                    // console.debug(`DEBUG: #${index} ignored. keyRef undefined`)
                     definicatorRunResult.push(new Ignored())
                     continue
                 }
                 throw new ExtendError({
-                    message: 'keyPattern seems empty string',
+                    message: 'keyRef seems empty string',
                     name: 'Invalid Definition',
                     status: 500,
                 })
@@ -210,7 +209,7 @@ export class ExtenderBase extends RedisClient {
                     }
                     case 'keyOnly': {
                         dummyResult = await apiDefinedMethod.function(
-                            dbFunctionKeypattern,
+                            dbFunctionKeyRef,
                             dbFunctionOpts,
                         )
                         break
@@ -224,7 +223,7 @@ export class ExtenderBase extends RedisClient {
                             })
                         }
                         dummyResult = await apiDefinedMethod.function(
-                            dbFunctionKeypattern,
+                            dbFunctionKeyRef,
                             dbFunctionInput,
                             dbFunctionOpts,
                         )
@@ -242,7 +241,7 @@ export class ExtenderBase extends RedisClient {
                             })
                         }
                         dummyResult = await apiDefinedMethod.function(
-                            dbFunctionKeypattern,
+                            dbFunctionKeyRef,
                             dbFunctionInput,
                             dbFunctionOpts,
                         )
@@ -257,7 +256,7 @@ export class ExtenderBase extends RedisClient {
                             })
                         }
                         dummyResult = await apiDefinedMethod.function(
-                            dbFunctionKeypattern,
+                            dbFunctionKeyRef,
                             dbFunctionInput,
                             dbFunctionOpts,
                         )
@@ -419,45 +418,35 @@ export class ExtenderBase extends RedisClient {
         return response
     }
 
-    protected methods: {
-        [x: string]:
-            | {
-                  kind: 'method'
-                  function: (opts?: JsonObj) => Promise<JsonType>
-              }
-            | {
-                  kind: 'keyOnly'
-                  function: (key: string, opts?: JsonObj) => Promise<JsonType>
-              }
-            | {
-                  kind: 'string'
-                  function: (
-                      key: string,
-                      str: string,
-                      opts?: JsonObj,
-                  ) => Promise<JsonType>
-              }
-            | {
-                  kind: 'multiKey'
-                  function: (key: string[], opts?: JsonObj) => Promise<JsonType>
-              }
-            | {
-                  kind: 'json'
-                  function: <T extends JsonObj>(
-                      key: string,
-                      data: T,
-                      opts?: JsonObj,
-                  ) => Promise<JsonType>
-              }
-            | {
-                  kind: 'array'
-                  function: <T extends JsonType[]>(
-                      key: string,
-                      data: T,
-                      opts?: JsonObj,
-                  ) => Promise<JsonType>
-              }
-    } = {
+    protected methodsExtend: methodType = {
+        getThrowError: {
+            kind: 'keyOnly',
+            function: this.getThrowError,
+        },
+        scanRegex: {
+            kind: 'keyOnly',
+            function: this.scanRegex,
+        },
+        incrSum: {
+            kind: 'keyOnly',
+            function: this.incrSum,
+        },
+        typeGrep: {
+            kind: 'method',
+            function: this.typeGrep,
+        },
+        zaddSingle: {
+            kind: 'json',
+            function: this.zaddSingle,
+        },
+        zremSingle: {
+            kind: 'string',
+            function: this.zremSingle,
+        },
+    }
+
+    protected methods: methodType = {
+        ...this.methodsExtend,
         del: {
             kind: 'keyOnly',
             function: this.del,
@@ -466,10 +455,6 @@ export class ExtenderBase extends RedisClient {
             kind: 'keyOnly',
             function: this.incr,
         },
-        incrSum: {
-            kind: 'keyOnly',
-            function: this.incrSum,
-        },
         get: {
             kind: 'keyOnly',
             function: this.get,
@@ -477,10 +462,6 @@ export class ExtenderBase extends RedisClient {
         mget: {
             kind: 'multiKey',
             function: this.mget,
-        },
-        getUndefinedAble: {
-            kind: 'keyOnly',
-            function: this.getUndefinedAble,
         },
         set: {
             kind: 'string',
@@ -502,29 +483,13 @@ export class ExtenderBase extends RedisClient {
             kind: 'keyOnly',
             function: this.scan,
         },
-        scanRegex: {
-            kind: 'keyOnly',
-            function: this.scanRegex,
-        },
-        typeGrep: {
-            kind: 'method',
-            function: this.typeGrep,
-        },
         zadd: {
-            kind: 'json',
+            kind: 'array',
             function: this.zadd,
         },
-        zaddArray: {
-            kind: 'array',
-            function: this.zaddArray,
-        },
         zrem: {
-            kind: 'string',
-            function: this.zrem,
-        },
-        zremArray: {
             kind: 'array',
-            function: this.zremArray,
+            function: this.zrem,
         },
         zrange: {
             kind: 'json',
@@ -539,8 +504,47 @@ export class ExtenderBase extends RedisClient {
             function: this.zrevrank,
         },
     }
-
     protected addMethod(method: typeof this.methods) {
         this.methods = { ...this.methods, ...method }
     }
+}
+
+type methodType = {
+    [x: string]:
+        | {
+              kind: 'method'
+              function: (opts?: JsonObj) => Promise<JsonType>
+          }
+        | {
+              kind: 'keyOnly'
+              function: (key: string, opts?: JsonObj) => Promise<JsonType>
+          }
+        | {
+              kind: 'string'
+              function: (
+                  key: string,
+                  str: string,
+                  opts?: JsonObj,
+              ) => Promise<JsonType>
+          }
+        | {
+              kind: 'multiKey'
+              function: (key: string[], opts?: JsonObj) => Promise<JsonType>
+          }
+        | {
+              kind: 'json'
+              function: <T extends JsonObj>(
+                  key: string,
+                  data: T,
+                  opts?: JsonObj,
+              ) => Promise<JsonType>
+          }
+        | {
+              kind: 'array'
+              function: <T extends JsonType[]>(
+                  key: string,
+                  data: T,
+                  opts?: JsonObj,
+              ) => Promise<JsonType>
+          }
 }

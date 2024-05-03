@@ -37,7 +37,6 @@ export class RedisClient {
         })
         return result
     }
-
     protected verifyParameter<T>(badopts: unknown, use: z.ZodSchema<T>) {
         try {
             return use.parse(badopts)
@@ -52,10 +51,9 @@ export class RedisClient {
             throw new Error('Unexpected Error at verifyParameter')
         }
     }
-
     protected verifyKey = async (key?: string) => {
-        const invalidKeyPatternRegex = new RegExp(/\/{2,}/)
-        if (typeof key !== 'undefined' && invalidKeyPatternRegex.test(key)) {
+        const invalidkeyRefRegex = new RegExp(/\/{2,}/)
+        if (typeof key !== 'undefined' && invalidkeyRefRegex.test(key)) {
             throw new ExtendError({
                 message: `Invalid Key assigneed, ${key}`,
                 status: 500,
@@ -64,7 +62,6 @@ export class RedisClient {
         }
         return
     }
-
     /** del: Delete DB key.
      * @param key DB key
      */
@@ -85,7 +82,6 @@ export class RedisClient {
             throw new Error('Unexpected Error at del')
         }
     }
-
     /** incr: incriment DB value.
      * @param key DB key
      * @param value incremental. defalut 1
@@ -107,85 +103,6 @@ export class RedisClient {
             throw new Error('Unexpected Error at incr')
         }
     }
-
-    /**
-     * incrSum: Return increment sum.
-     * @param pattern Glob-style pattern.
-     */
-    incrSum = async (pattern: string): Promise<number | undefined> => {
-        try {
-            this.verifyKey(pattern)
-            // search pattern
-            const [_, keys] = await this.Redis.scan(0, {
-                match: pattern,
-            })
-            console.debug(`DEBUG: pattern=${pattern} keys=${keys}`)
-            // if no keys found, return init value
-            if (keys.length <= 0) {
-                return undefined
-            }
-            const values: unknown[] = await this.Redis.mget(keys)
-            const tasksSafeParse = Promise.allSettled(
-                values.map((value: unknown) => {
-                    const safeParsed = z.number().safeParse(value)
-                    if (safeParsed.success) {
-                        return safeParsed.data
-                    } else {
-                        return undefined
-                    }
-                }),
-            )
-            const result = await tasksSafeParse
-            return result.reduce((a, x) => {
-                if (
-                    x.status === 'fulfilled' &&
-                    typeof x.value !== 'undefined'
-                ) {
-                    return a + x.value
-                }
-                return a
-            }, 0)
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error at incrSum')
-        }
-    }
-
-    /** get: Read DB. if value not found, throw error.
-     * @param key DB key
-     */
-    get = async (key: string): Promise<string> => {
-        try {
-            this.verifyKey(key)
-            const value: string | null = await this.Redis.get(key)
-            if (value === null || typeof value === 'undefined') {
-                throw new ExtendError({
-                    message: `Data not found.`,
-                    status: 404,
-                    name: 'Not Found',
-                })
-            }
-            return value
-        } catch (e: unknown) {
-            if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error at get')
-        }
-    }
-
     /** mget: Read DB. if value not found, throw error.
      * @param key DB keys
      */
@@ -217,11 +134,10 @@ export class RedisClient {
             throw new Error('Unexpected Error at mget')
         }
     }
-
-    /** getUndefinedAble: Read DB. if value not found, return undefined
+    /** get: Read DB. if value not found, return undefined
      * @param key DB key
      */
-    getUndefinedAble = async (key: string): Promise<JsonType> => {
+    get = async (key: string): Promise<JsonType> => {
         try {
             this.verifyKey(key)
             const value: string | null = await this.Redis.get(key)
@@ -239,10 +155,9 @@ export class RedisClient {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at getUndefinedAble')
+            throw new Error('Unexpected Error at get')
         }
     }
-
     /** set: Write DB as string
      * @param key DB key
      * @param value register DB value
@@ -290,7 +205,6 @@ export class RedisClient {
             throw new Error('Unexpected Error at set')
         }
     }
-
     /** jsonGet: Read db value of json data
      * @param key DB key
      * @param opts.path default '$', set get json path
@@ -340,7 +254,6 @@ export class RedisClient {
             throw new Error('Unexpected Error at jsonGet')
         }
     }
-
     /** jsonMget: Read db values of json data
      * @param keys DB keys
      * @param opts.path default '$', set get json path
@@ -442,7 +355,6 @@ export class RedisClient {
             throw new Error('Unexpected Error at jsonSet')
         }
     }
-
     /** jsonDel: Delete db value of json data
      * @param key DB key
      * @param opts.path default '$', set get json path
@@ -480,7 +392,6 @@ export class RedisClient {
             throw new Error('Unexpected Error at jsonDel')
         }
     }
-
     /**
      * scan: Scan pattern, return key list
      * @param pattern Glob-style pattern.
@@ -495,7 +406,7 @@ export class RedisClient {
             // if no keys found throw error
             if (keys.length <= 0) {
                 throw new ExtendError({
-                    message: `No found keypattern: ${pattern}`,
+                    message: `No found keyRef: ${pattern}`,
                     status: 500,
                     name: 'KeyScan Failed',
                 })
@@ -514,144 +425,14 @@ export class RedisClient {
             throw new Error('Unexpected Error at scan')
         }
     }
-
     /**
-     * scanRegex: Scan pattern, return key list
-     * @param regex regex pattern.
-     */
-    scanRegex = async (regex: string): Promise<string[]> => {
-        try {
-            
-            // search pattern
-            const [_, keys] = await this.Redis.scan(0, {
-                match: "*",
-            })
-            console.debug(`DEBUG: regex=${regex}`)
-            const selectedKeys = keys.reduce<string[]>((nval, key) => {
-                if(RegExp(regex, "g").test(key)) {
-                    nval.push(key)
-                }
-                return nval
-            }, [])
-            // if no keys found throw error
-            if (selectedKeys.length <= 0) {
-                throw new ExtendError({
-                    message: `No found keypattern: ${regex}`,
-                    status: 500,
-                    name: 'KeyScan Failed',
-                })
-            }
-            return selectedKeys
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error at scanRegex')
-        }
-    }
-
-    /**
-     * typeGrep: Scan pattern, return key list
-     * @param opts.keys
-     * @param opts.type
-     */
-    typeGrep = async (opts?: JsonObj): Promise<string[]> => {
-        try {
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                z.object({
-                    keys: z.string().array(),
-                    type: this.ZodType,
-                }),
-            )
-            const result: string[] = []
-            await Promise.all(
-                verifiedOpts.keys.map(async (key) => {
-                    const currentType = await this.Redis.type(key)
-                    if (currentType === verifiedOpts.type) {
-                        result.push(key)
-                    }
-                }),
-            )
-            return result
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error at typeGrep')
-        }
-    }
-
-    /**
-     * zadd: Add sortedSet
-     * @param key key
-     * @param values sortedSet
-     * @param opts zadd options
-     * @returns
-     */
-    zadd = async (
-        key: string,
-        values: JsonType,
-        opts?: JsonObj,
-    ): Promise<JsonType | undefined> => {
-        try {
-            this.verifyKey(key)
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                this.ZodZaddCommandOptions,
-            )
-            const verifiedValue = this.verifyParameter(
-                values,
-                this.ZodSortedSet,
-            )
-            let result: null | number | undefined
-            if (typeof verifiedValue === 'undefined') {
-                return
-            }
-            if (verifiedOpts !== undefined) {
-                result = await this.Redis.zadd(key, verifiedOpts, verifiedValue)
-            } else {
-                result = await this.Redis.zadd(key, verifiedValue)
-            }
-
-            result = result !== null ? result : undefined
-            if (verifiedOpts?.incr === true) {
-                return result
-            }
-            return
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error at zadd')
-        }
-    }
-    /**
-     * zaddArray: Add sortedSets
+     * zadd: Add sortedSets
      * @param key key
      * @param values sortedSet list
      * @param opts zadd options
      * @returns
      */
-    zaddArray = async (
+    zadd = async (
         key: string,
         values: JsonType[],
         opts?: JsonObj,
@@ -704,36 +485,12 @@ export class RedisClient {
         }
     }
     /**
-     * zrem: Remove value from sortedSet
+     * zrem: Remove value from sortedSets
      * @param key key
      * @param values sortedSet list
      * @returns none
      */
-    zrem = async (key: string, value: string): Promise<undefined> => {
-        try {
-            this.verifyKey(key)
-            await this.Redis.zrem(key, value)
-            return
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error at zrem')
-        }
-    }
-    /**
-     * zremArray: Remove value from sortedSets
-     * @param key key
-     * @param values sortedSet list
-     * @returns none
-     */
-    zremArray = async (key: string, values: JsonType[]): Promise<undefined> => {
+    zrem = async (key: string, values: JsonType[]): Promise<undefined> => {
         try {
             this.verifyKey(key)
             const verifiedValues = this.verifyParameter(

@@ -9,7 +9,7 @@ export const TestGetTokens = new Definition(
     },
     [
         {
-            keyPattern: 'token/*',
+            keyRef: 'token/*',
             functionName: 'scan',
             output: z.string().array(),
         },
@@ -37,7 +37,7 @@ export const TestGetUsers = new Definition(
     },
     [
         {
-            keyPattern: 'user/*',
+            keyRef: 'user/*',
             functionName: 'scan',
             output: z.string().array(),
         },
@@ -73,20 +73,20 @@ export const TestAddRanking = new Definition(
     },
     [
         {
-            keyPattern: 'user/${#.handle}/*',
+            keyRef: 'user/${#.handle}/*',
             functionName: 'incrSum',
             output: z.number().default(0),
         },
         {
-            keyPattern: 'rank/favo',
-            functionName: 'zadd',
+            keyRef: 'rank/favo',
+            functionName: 'zaddSingle',
             input: {
                 score: '${#0}',
                 member: '${#.handle}',
             },
         },
         {
-            keyPattern: 'rank/favo',
+            keyRef: 'rank/favo',
             functionName: 'zrevrank',
             input: '${#.handle}',
             output: z.number(),
@@ -101,7 +101,7 @@ export const TestShowRanking = new Definition(
     },
     [
         {
-            keyPattern: 'rank/favo',
+            keyRef: 'rank/favo',
             functionName: 'zrange',
             input: {
                 min: 0,
@@ -125,8 +125,8 @@ export const TestRemoveRanking = new Definition(
     },
     [
         {
-            keyPattern: 'rank/favo',
-            functionName: 'zrem',
+            keyRef: 'rank/favo',
+            functionName: 'zremSingle',
             input: '${#.handle}',
         },
     ],
@@ -140,7 +140,7 @@ export const TestRmRankingAllUser = new Definition(
     },
     [
         {
-            keyPattern: '^user/[^\\/]+$',
+            keyRef: '^user/[^\\/]+$',
             functionName: 'scanRegex',
             output: z.string().array(),
         },
@@ -154,8 +154,8 @@ export const TestRmRankingAllUser = new Definition(
             output: z.string().array(),
         },
         {
-            keyPattern: 'rank/favo',
-            functionName: 'zremArray',
+            keyRef: 'rank/favo',
+            functionName: 'zrem',
             input: '${#1}',
         },
     ],
@@ -170,7 +170,7 @@ export const TestAddRankingAllUser = new Definition(
     },
     [
         {
-            keyPattern: '^user/[^\\/]+$',
+            keyRef: '^user/[^\\/]+$',
             functionName: 'scanRegex',
             output: z.string().array(),
         },
@@ -202,8 +202,8 @@ export const TestAddRankingAllUser = new Definition(
                 .array(),
         },
         {
-            keyPattern: 'rank/favo',
-            functionName: 'zaddArray',
+            keyRef: 'rank/favo',
+            functionName: 'zadd',
             input: '${#3}',
         },
     ],
