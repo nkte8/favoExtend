@@ -3,7 +3,11 @@ import { ExtendError } from './ExtendError'
 
 import { JsonType, JsonObj } from './availableTypes'
 
-type RelationType = { [key: string]: RelationType } | string
+type RelationType =
+    | { [key: string]: RelationType }
+    | string
+    | number
+    | boolean
 
 type ApiDef = {
     path: string
@@ -33,6 +37,10 @@ type UnRequire<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>
 export class Definition {
     public apiDef: ApiDef
     public dbDefs: RedisDef[]
+    /**
+     * refMarker regex. Set groupmatch 1 as refName ex: ([^${}]*)
+     */
+    public refRegex: RegExp = /\${([^${}]*)}/g
     /**
      * Create API Definition
      * @param apiDef set { path, method, input, query, output }
@@ -150,11 +158,10 @@ export class Definition {
     }) {
         // console.debug(`DEBUG: relationData=${JSON.stringify(relationData)}`)
         // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
-        const Regex = /{([^{}]*)}/g
         const result: JsonType = {}
         if (typeof relationData === 'string') {
             // relationData ex. input={data}
-            const matchedArray = [...relationData.matchAll(Regex)]
+            const matchedArray = [...relationData.matchAll(this.refRegex)]
             if (matchedArray.length > 1) {
                 throw new ExtendError({
                     message: `Invalid relationData definicated: relationData=${relationData}`,
@@ -162,17 +169,24 @@ export class Definition {
                     name: 'Invalid Definition',
                 })
             }
-            if (matchedArray.length == 0) {
+            if (matchedArray.length === 0) {
                 return relationData
             }
             // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
             const refMarker = matchedArray[0][1]
+            // if no refMaker return
+            if (refMarker === ""){
+                return relationData
+            }
             const refValue = this.getValueFromObjectByRef({
                 refMarker,
                 searchData: inputData,
             })
             // console.debug(`DEBUG: refMarker=${refMarker}, refValue=${refValue}`)
             return refValue
+        }
+        if (typeof relationData !== 'object') {
+            return relationData
         }
 
         Object.keys(relationData).map(async (key) => {
@@ -321,8 +335,7 @@ export class Definition {
         apiInput: JsonType
         multiKeysRef: string
     }): Promise<string[]> {
-        const Regex = /{([^{}]*)}/g
-        const matchedArray = [...multiKeysRef.matchAll(Regex)]
+        const matchedArray = [...multiKeysRef.matchAll(this.refRegex)]
 
         if (typeof apiInput === 'undefined') {
             return [multiKeysRef]
@@ -377,8 +390,7 @@ export class Definition {
         apiInput: JsonType
         dbKeyPattern: string
     }): Promise<string> {
-        const Regex = /{([^{}]*)}/g
-        const matchedArray = [...dbKeyPattern.matchAll(Regex)]
+        const matchedArray = [...dbKeyPattern.matchAll(this.refRegex)]
 
         if (typeof apiInput === 'undefined') {
             return dbKeyPattern
@@ -408,17 +420,13 @@ export class Definition {
                     })
                 }
                 dbKeyPattern = dbKeyPattern.replace(
-                    `{${matchedRef}}`,
+                    value[0],
                     inputData,
                 )
                 // console.debug(`DEBUG: dbKeyPattern=${dbKeyPattern}`)
             }),
         )
         return dbKeyPattern
-    }
-
-    verifyRefMarker(dummyRefMarker: string): boolean {
-        return RegExp(/a/g).test(dummyRefMarker)
     }
 
     /**
