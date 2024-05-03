@@ -139,15 +139,16 @@ You can know Extend functions example in file `FavoExtend.ts`. If you need to co
 
 When you add your function, you need to set `kind` by function input below.
 
-| Your function input                                 | kind value |
-| --------------------------------------------------- | ---------- |
-| no input(or only options[^1]) need                  | methodOnly |
-| only key of Redis(and options) need                 | keyOnly    |
-| key and Json Literal(and options) need              | literal    |
-| key and Json Object(and options) need               | object     |
-| key and Json Array(and options) need                | array      |
-| key and Json Object/Array/literal(and options) need | any        |
-| keys(and options) need                              | multiKey   |
+| Your function input                                  | kind value |
+| ---------------------------------------------------- | ---------- |
+| no input(or only options[^1]) need                   | methodOnly |
+| only key of Redis(and options) need                  | keyOnly    |
+| keys(and options) need                               | multiKey   |
+| key and Json Literal(and options) need               | literal    |
+| key and Json Object(and options) need                | object     |
+| key and Json Array(and options) need                 | array      |
+| key and Json Object/Array/literal(and options) need  | any        |
+| only input of Object/Array/literal(and options) need | anyNokey   |
 
 [^1]: options is un managed key-value object. need to control in function.
 

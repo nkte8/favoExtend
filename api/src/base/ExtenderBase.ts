@@ -140,7 +140,7 @@ export class ExtenderBase extends RedisExtend {
             const dbFunctionKeyRef = dbInput[0]
             const dbFunctionInput = dbInput[1]
             const dbFunctionOpts = dbInput[2]
-            const multiKeysRef = dbInput[3]
+            const dbFunctionMultiKeysRef = dbInput[3]
             // console.debug(
             //     `DEBUG: keyRef={${dbFunctionKeyRef}}, input={${JSON.stringify(
             //         dbFunctionInput,
@@ -161,7 +161,8 @@ export class ExtenderBase extends RedisExtend {
             if (
                 !(
                     apiDefinedMethod.kind === 'method' ||
-                    apiDefinedMethod.kind === 'multiKey'
+                    apiDefinedMethod.kind === 'multiKey' ||
+                    apiDefinedMethod.kind === 'anyNokey'
                 ) &&
                 dbFunctionKeyRef === ''
             ) {
@@ -176,6 +177,23 @@ export class ExtenderBase extends RedisExtend {
                     status: 500,
                 })
             }
+
+            if (
+                apiDefinedMethod.kind === 'multiKey' &&
+                dbFunctionMultiKeysRef.length === 0
+            ) {
+                if (dbDef.ignoreFail === true) {
+                    // console.debug(`DEBUG: #${index} ignored. keyRef undefined`)
+                    definicatorRunResult.push(new Ignored())
+                    continue
+                }
+                throw new ExtendError({
+                    message: 'keys from multiKeysRef seems empty array',
+                    name: 'Invalid Definition',
+                    status: 500,
+                })
+            }
+
             if (typeof dbDef.dependFunc !== 'undefined') {
                 let isContainIgnored: boolean = false
                 for (const value of dbDef.dependFunc) {
@@ -267,7 +285,7 @@ export class ExtenderBase extends RedisExtend {
                     }
                     case 'multiKey': {
                         dummyResult = await apiDefinedMethod.function(
-                            multiKeysRef,
+                            dbFunctionMultiKeysRef,
                             dbFunctionOpts,
                         )
                         break
@@ -275,6 +293,13 @@ export class ExtenderBase extends RedisExtend {
                     case 'any': {
                         dummyResult = await apiDefinedMethod.function(
                             dbFunctionKeyRef,
+                            dbFunctionInput,
+                            dbFunctionOpts,
+                        )
+                        break
+                    }
+                    case 'anyNokey': {
+                        dummyResult = await apiDefinedMethod.function(
                             dbFunctionInput,
                             dbFunctionOpts,
                         )
@@ -562,6 +587,13 @@ type methodType = {
               kind: 'any'
               function: <T extends JsonType>(
                   key: string,
+                  data: T,
+                  opts?: JsonObj,
+              ) => Promise<JsonType>
+          }
+        | {
+              kind: 'anyNokey'
+              function: <T extends JsonType>(
                   data: T,
                   opts?: JsonObj,
               ) => Promise<JsonType>

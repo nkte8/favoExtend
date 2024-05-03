@@ -161,7 +161,6 @@ export const TestRmRankingAllUser = new Definition(
     ],
 )
 
-
 export const TestAddRankingAllUser = new Definition(
     {
         path: '/addRankAlluser',
@@ -205,6 +204,26 @@ export const TestAddRankingAllUser = new Definition(
             keyRef: 'rank/favo',
             functionName: 'zadd',
             input: '${#3}',
+        },
+    ],
+)
+export const TestRedefine = new Definition(
+    {
+        path: '/redefine',
+        method: 'GET',
+        output: "${#0}"
+    },
+    [
+        {
+            functionName: 'defineRef',
+            input: {
+                key1: "value1",
+                key2: "value2",
+            },
+            output: z.object({
+                key1: z.string(),
+                key2: z.string()
+            })
         },
     ],
 )

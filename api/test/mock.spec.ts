@@ -18,7 +18,8 @@ const MockClient = new FavoExtend(env, [
     defs.TestShowRanking,
     defs.TestRemoveRanking,
     defs.TestRmRankingAllUser,
-    defs.TestAddRankingAllUser
+    defs.TestAddRankingAllUser,
+    defs.TestRedefine,
 ])
 
 const sleep = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
@@ -120,7 +121,6 @@ describe('API test', () => {
             ranking: rank,
         })
     })
-
     it('[Positive] Remove mockuser from rank/favo', async () => {
         const apiResult = await MockClient.apiResult({
             httpMethod: 'POST',
@@ -133,7 +133,6 @@ describe('API test', () => {
             result: 'OK',
         })
     })
-
     it('[Positive] Remove all users to rank/favo', async () => {
         const apiResult = await MockClient.apiResult({
             httpMethod: 'POST',
@@ -143,7 +142,6 @@ describe('API test', () => {
             result: 'OK',
         })
     })
-
     it('[Positive] Add all users to rank/favo', async () => {
         const apiResult = await MockClient.apiResult({
             httpMethod: 'POST',
@@ -153,5 +151,14 @@ describe('API test', () => {
             result: 'OK',
         })
     })
-
+    it('[Positive] Redefine test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'GET',
+            requestUrl: new URL('https://example.com/redefine'),
+        })
+        expect(apiResult).toMatchObject({
+            key1: 'value1',
+            key2: 'value2',
+        })
+    })
 })

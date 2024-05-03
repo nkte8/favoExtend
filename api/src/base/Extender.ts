@@ -31,7 +31,7 @@ export class Extender extends ExtenderBase {
                 function: this.arrayReplace,
             },
             defineRef: {
-                kind: "any",
+                kind: 'anyNokey',
                 function: this.defineRef,
             },
         })
@@ -137,13 +137,12 @@ export class Extender extends ExtenderBase {
             throw new Error('Unexpected Error at arrayMerge')
         }
     }
-
     /**
      * defineRef: Define input
      * @param input anyvalue
      * @returns pass through
      */
-    defineRef = async (input?: JsonType): Promise<JsonType> => {
+    defineRef = async (input: JsonType): Promise<JsonType> => {
         try {
             // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
             return input
