@@ -128,11 +128,11 @@ describe('API test', () => {
             }),
         })
         // get value. default is 0
-        const count = await RedisClient.get('favo/testid').then((value) =>
-            value === null ? 0 : value,
-        )
         const user = await RedisClient.get('user/testuser/testid').then(
             (value) => (value === null ? 0 : value),
+        )
+        const count = await RedisClient.get('favo/testid').then((value) =>
+            value === null ? 0 : value,
         )
         expect(await response.json()).toMatchObject({
             count: count,

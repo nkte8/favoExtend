@@ -82,17 +82,22 @@ export class ExtenderBase extends RedisExtend {
                 status: 400,
             })
         }
-        let dummyInput: JsonObj = {}
+        // console.debug(`DEBUG: requestBody=${JSON.stringify(requestBody)}`)
+
+        let dummyInput: JsonType = {}
         if (typeof requestQuery !== 'undefined') {
-            dummyInput = { ...dummyInput, ...requestQuery }
+            dummyInput = requestQuery
         }
-        if (typeof requestBody === 'object' && !Array.isArray(requestBody)) {
-            dummyInput = { ...dummyInput, ...requestBody }
+        if (typeof requestBody !== 'undefined') {
+            dummyInput = requestBody
         }
         // Wrap input by "#"
         const requestInput: JsonObj = {}
-        requestInput['#'] = { ...dummyInput }
-
+        if (typeof dummyInput === 'object' && !Array.isArray(dummyInput)) {
+            requestInput['#'] = { ...dummyInput }
+        } else {
+            requestInput['#'] = dummyInput
+        }
         const definicatorRunResult: (JsonType | undefined | Ignored)[] = []
         // process by order
         for (let index = 0; index < Definicator.dbDefs.length; index++) {
@@ -162,7 +167,7 @@ export class ExtenderBase extends RedisExtend {
                 !(
                     apiDefinedMethod.kind === 'method' ||
                     apiDefinedMethod.kind === 'multiKey' ||
-                    apiDefinedMethod.kind === 'anyNokey'
+                    apiDefinedMethod.kind.includes('Nokey')
                 ) &&
                 dbFunctionKeyRef === ''
             ) {
@@ -232,6 +237,13 @@ export class ExtenderBase extends RedisExtend {
                         )
                         break
                     }
+                    case 'multiKey': {
+                        dummyResult = await apiDefinedMethod.function(
+                            dbFunctionMultiKeysRef,
+                            dbFunctionOpts,
+                        )
+                        break
+                    }
                     case 'literal': {
                         if (
                             typeof dbFunctionInput === 'object' ||
@@ -283,13 +295,6 @@ export class ExtenderBase extends RedisExtend {
                         )
                         break
                     }
-                    case 'multiKey': {
-                        dummyResult = await apiDefinedMethod.function(
-                            dbFunctionMultiKeysRef,
-                            dbFunctionOpts,
-                        )
-                        break
-                    }
                     case 'any': {
                         dummyResult = await apiDefinedMethod.function(
                             dbFunctionKeyRef,
@@ -298,6 +303,56 @@ export class ExtenderBase extends RedisExtend {
                         )
                         break
                     }
+
+                    case 'literalNokey': {
+                        if (
+                            typeof dbFunctionInput === 'object' ||
+                            Array.isArray(dbFunctionInput)
+                        ) {
+                            throw new ExtendError({
+                                message: 'Function needs string input.',
+                                name: 'Unexpected Request',
+                                status: 500,
+                            })
+                        }
+                        dummyResult = await apiDefinedMethod.function(
+                            dbFunctionInput,
+                            dbFunctionOpts,
+                        )
+                        break
+                    }
+                    case 'objectNokey': {
+                        if (
+                            typeof dbFunctionInput !== 'object' ||
+                            Array.isArray(dbFunctionInput)
+                        ) {
+                            throw new ExtendError({
+                                message: 'Undefined input requested',
+                                name: 'Unexpected Request',
+                                status: 500,
+                            })
+                        }
+                        dummyResult = await apiDefinedMethod.function(
+                            dbFunctionInput,
+                            dbFunctionOpts,
+                        )
+                        break
+                    }
+                    case 'arrayNokey': {
+                        if (!Array.isArray(dbFunctionInput)) {
+                            throw new ExtendError({
+                                message: 'Undefined input requested',
+                                name: 'Unexpected Request',
+                                status: 500,
+                            })
+                        }
+                        dummyResult = await apiDefinedMethod.function(
+                            dbFunctionInput,
+                            dbFunctionOpts,
+                        )
+                        break
+                    }
+
                     case 'anyNokey': {
                         dummyResult = await apiDefinedMethod.function(
                             dbFunctionInput,
@@ -594,6 +649,24 @@ type methodType = {
         | {
               kind: 'anyNokey'
               function: <T extends JsonType>(
+                  data: T,
+                  opts?: JsonObj,
+              ) => Promise<JsonType>
+          }
+        | {
+              kind: 'literalNokey'
+              function: (data: JsonLiteral, opts?: JsonObj) => Promise<JsonType>
+          }
+        | {
+              kind: 'arrayNokey'
+              function: <T extends JsonType[]>(
+                  data: T,
+                  opts?: JsonObj,
+              ) => Promise<JsonType>
+          }
+        | {
+              kind: 'objectNokey'
+              function: <T extends JsonObj>(
                   data: T,
                   opts?: JsonObj,
               ) => Promise<JsonType>

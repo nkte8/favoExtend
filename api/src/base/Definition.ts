@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { ExtendError } from './ExtendError'
 
-import { JsonType, JsonObj } from './availableTypes'
+import { JsonType, JsonObj, KeyValue } from './availableTypes'
 
 type RelationType =
     | { [key: string]: RelationType }
@@ -14,7 +14,7 @@ type ApiDef = {
     path: string
     method: string
     input?: z.ZodSchema<JsonType>
-    query?: z.ZodSchema<JsonObj>
+    query?: z.ZodSchema<KeyValue>
     output?: RelationType
 }
 type RedisDef = {
@@ -109,6 +109,7 @@ export class Definition {
     }
 
     verifyAPIInput(dummy: unknown): Invalid | JsonType | undefined {
+        // console.debug(`DEBUG: dummy=${JSON.stringify(dummy)}`)
         const zodObject = this.apiDef.input
         if (typeof zodObject === 'undefined') {
             return dummy === undefined ? undefined : new Invalid()
@@ -221,6 +222,7 @@ export class Definition {
         inputData: JsonType
         relationData: RelationType | undefined
     }) {
+        // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
         if (typeof relationData === 'undefined') {
             return
         }

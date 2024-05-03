@@ -252,3 +252,24 @@ export const TestRedefine2 = new Definition(
         },
     ],
 )
+
+export const TestValuesToHalf = new Definition(
+    {
+        path: '/half',
+        method: 'POST',
+        input: z.number().array(),
+        output: '${#1}',
+    },
+    [
+        {
+            functionName: 'numSum',
+            input: "${#}",
+            output: z.number(),
+        },
+        {
+            functionName: 'numAvg',
+            input: ['${#0}', 0],
+            output: z.number(),
+        },
+    ],
+)

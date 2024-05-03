@@ -65,6 +65,8 @@ Also you can use methods not control redis.
 | objectExtract | Merge Arrays to object. ex: `{hoge: ["a","b","c"],fuga: [100,300,500]}` -> `[{hoge: "a", fuga: 100},{hoge: "b", fuga: 300},{hoge: "c", fuga: 500}]` |
 | arrayReplace | Replace array item and return replaced array. |
 | defineRef | Pass through the ref value. you can re-define output. |
+| numSum | Get sum from key list. |
+| numAvg | Get average from key list. |
 
 ## How to use API
 

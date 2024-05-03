@@ -21,6 +21,7 @@ const MockClient = new FavoExtend(env, [
     defs.TestAddRankingAllUser,
     defs.TestRedefine,
     defs.TestRedefine2,
+    defs.TestValuesToHalf
 ])
 
 const sleep = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
@@ -173,5 +174,15 @@ describe('API test', () => {
             value: 'hoge',
             array: expect.arrayContaining(['fuga', 'hogefuga']),
         })
+    })
+    it('[Positive] numXX function test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'POST',
+            requestUrl: new URL(
+                'https://example.com/half',
+            ),
+            input: [10,20,30]
+        })
+        expect(apiResult).toEqual(30)
     })
 })

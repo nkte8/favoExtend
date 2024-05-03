@@ -34,6 +34,14 @@ export class Extender extends ExtenderBase {
                 kind: 'anyNokey',
                 function: this.defineRef,
             },
+            numSum: {
+                kind: "arrayNokey",
+                function: this.numSum,
+            },
+            numAvg: {
+                kind: 'arrayNokey',
+                function: this.numAvg,
+            },
         })
     }
     /**
@@ -71,7 +79,7 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at arrayMerge')
+            throw new Error('Unexpected Error at arrayReplace')
         }
     }
 
@@ -134,7 +142,7 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at arrayMerge')
+            throw new Error('Unexpected Error at objectExtract')
         }
     }
     /**
@@ -154,7 +162,87 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at arrayMerge')
+            throw new Error('Unexpected Error at defineRef')
+        }
+    }
+    /**
+     * numberSum: get sum. string data parse to number, if cannot, skip
+     * @param values array of number
+     * @returns pass through
+     */
+    numSum = async (values: JsonType[]): Promise<JsonType> => {
+        try {
+            const tasksSafeParse = Promise.all(
+                values.map((value: unknown) => {
+                    const safeParsed = z.number().safeParse(value)
+                    if (safeParsed.success) {
+                        return safeParsed.data
+                    } else {
+                        return undefined
+                    }
+                }),
+            )
+            const result = await tasksSafeParse
+            return result.reduce<number>((a, x) => {
+                if (typeof x !== 'undefined') {
+                    return a + x
+                }
+                return a
+            }, 0)
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at numSum')
+        }
+    }
+
+    /**
+     * numberSum: get average. string data parse to number, if cannot, skip
+     * @param values array of number
+     * @returns pass through
+     */
+    numAvg = async (values: JsonType[]): Promise<JsonType> => {
+        try {
+            const tasksSafeParse = Promise.all(
+                values.map((value: unknown) => {
+                    const safeParsed = z.number().safeParse(value)
+                    if (safeParsed.success) {
+                        return safeParsed.data
+                    } else {
+                        return undefined
+                    }
+                }),
+            )
+            let lenght = 0
+            const result = (await tasksSafeParse).reduce<number>((a, x) => {
+                if (typeof x !== 'undefined') {
+                    lenght += 1
+                    return a + x
+                }
+                return a
+            }, 0)
+            if (lenght === 0) {
+                throw new ExtendError({
+                    message: `Available key not found`,
+                    status: 400,
+                    name: 'Bad Input',
+                })
+            }
+            return result / lenght
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at numSum')
         }
     }
 }
