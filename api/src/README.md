@@ -64,6 +64,7 @@ Also you can use methods not control redis.
 | --- | --- |
 | objectExtract | Merge Arrays to object. ex: `{hoge: ["a","b","c"],fuga: [100,300,500]}` -> `[{hoge: "a", fuga: 100},{hoge: "b", fuga: 300},{hoge: "c", fuga: 500}]` |
 | arrayReplace | Replace array item and return replaced array. |
+| defineRef | Pass through the ref value. you can re-define output. |
 
 ## How to use API
 
@@ -138,12 +139,15 @@ You can know Extend functions example in file `FavoExtend.ts`. If you need to co
 
 When you add your function, you need to set `kind` by function input below.
 
-| Your function input                   | kind value |
-| ------------------------------------- | ---------- |
-| no input(or only options[^1]) need    | methodOnly |
-| only key of Redis(and options) need   | keyOnly    |
-| key and string(and options) need      | keyStr     |
-| key and Json Object(and options) need | keyObj     |
+| Your function input                                 | kind value |
+| --------------------------------------------------- | ---------- |
+| no input(or only options[^1]) need                  | methodOnly |
+| only key of Redis(and options) need                 | keyOnly    |
+| key and Json Literal(and options) need              | literal    |
+| key and Json Object(and options) need               | object     |
+| key and Json Array(and options) need                | array      |
+| key and Json Object/Array/literal(and options) need | any        |
+| keys(and options) need                              | multiKey   |
 
 [^1]: options is un managed key-value object. need to control in function.
 

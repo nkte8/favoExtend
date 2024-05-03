@@ -5,7 +5,7 @@ import { JsonType, JsonObj } from './availableTypes'
 import { z } from 'zod'
 
 export class Extender extends ExtenderBase {
-    // protected addMethod(method: typeof this.methods) { 
+    // protected addMethod(method: typeof this.methods) {
     //     super.addMethod(method)
     // }
     constructor(
@@ -15,7 +15,7 @@ export class Extender extends ExtenderBase {
         },
         additionalDefs?: Definition[],
     ) {
-        const Definitions:Definition[] = []
+        const Definitions: Definition[] = []
         if (additionalDefs !== undefined) {
             Definitions.push(...additionalDefs)
         }
@@ -30,6 +30,10 @@ export class Extender extends ExtenderBase {
                 kind: 'method',
                 function: this.arrayReplace,
             },
+            defineRef: {
+                kind: "any",
+                function: this.defineRef,
+            },
         })
     }
     /**
@@ -42,7 +46,7 @@ export class Extender extends ExtenderBase {
      */
     arrayReplace = async (opts?: JsonObj): Promise<JsonType> => {
         try {
-            console.debug(`DEBUG: opts=${JSON.stringify(opts)}`)
+            // console.debug(`DEBUG: opts=${JSON.stringify(opts)}`)
             const verifiedOpts = this.verifyParameter(
                 opts,
                 z.object({
@@ -52,9 +56,12 @@ export class Extender extends ExtenderBase {
                 }),
             )
             const result = verifiedOpts.array.map((value) =>
-                value.replace(new RegExp(verifiedOpts.regex, "g"), verifiedOpts.replace),
+                value.replace(
+                    new RegExp(verifiedOpts.regex, 'g'),
+                    verifiedOpts.replace,
+                ),
             )
-            console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
             return result
         } catch (e: unknown) {
             if (e instanceof Error) {
@@ -117,8 +124,29 @@ export class Extender extends ExtenderBase {
                 })
                 return jsonValue
             })
-            console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
             return result
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at arrayMerge')
+        }
+    }
+
+    /**
+     * defineRef: Define input
+     * @param input anyvalue
+     * @returns pass through
+     */
+    defineRef = async (input?: JsonType): Promise<JsonType> => {
+        try {
+            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
+            return input
         } catch (e: unknown) {
             if (e instanceof Error) {
                 throw new ExtendError({

@@ -1,6 +1,6 @@
 import { RedisClient } from './RedisClient'
 import { ExtendError } from './ExtendError'
-import { JsonType, JsonObj } from './availableTypes'
+import { JsonType, JsonObj, JsonLiteral } from './availableTypes'
 import { z } from 'zod'
 
 export class RedisExtend extends RedisClient {
@@ -218,7 +218,10 @@ export class RedisExtend extends RedisClient {
      * @param values sortedSet list
      * @returns none
      */
-    zremSingle = async (key: string, value: string): Promise<undefined> => {
+    zremSingle = async (
+        key: string,
+        value: JsonLiteral,
+    ): Promise<undefined> => {
         try {
             this.verifyKey(key)
             await this.Redis.zrem(key, value)

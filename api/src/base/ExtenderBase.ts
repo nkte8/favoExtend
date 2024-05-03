@@ -1,6 +1,6 @@
 import { Definition, Invalid } from './Definition'
 import { ExtendError } from './ExtendError'
-import { JsonType, JsonObj } from './availableTypes'
+import { JsonType, JsonObj, JsonLiteral } from './availableTypes'
 import { RedisExtend } from './RedisExtend'
 
 export class Ignored {
@@ -214,8 +214,11 @@ export class ExtenderBase extends RedisExtend {
                         )
                         break
                     }
-                    case 'string': {
-                        if (typeof dbFunctionInput !== 'string') {
+                    case 'literal': {
+                        if (
+                            typeof dbFunctionInput === 'object' ||
+                            Array.isArray(dbFunctionInput)
+                        ) {
                             throw new ExtendError({
                                 message: 'Function needs string input.',
                                 name: 'Unexpected Request',
@@ -229,7 +232,7 @@ export class ExtenderBase extends RedisExtend {
                         )
                         break
                     }
-                    case 'json': {
+                    case 'object': {
                         if (
                             typeof dbFunctionInput !== 'object' ||
                             Array.isArray(dbFunctionInput)
@@ -265,6 +268,14 @@ export class ExtenderBase extends RedisExtend {
                     case 'multiKey': {
                         dummyResult = await apiDefinedMethod.function(
                             multiKeysRef,
+                            dbFunctionOpts,
+                        )
+                        break
+                    }
+                    case 'any': {
+                        dummyResult = await apiDefinedMethod.function(
+                            dbFunctionKeyRef,
+                            dbFunctionInput,
                             dbFunctionOpts,
                         )
                         break
@@ -436,11 +447,11 @@ export class ExtenderBase extends RedisExtend {
             function: this.typeGrep,
         },
         zaddSingle: {
-            kind: 'json',
+            kind: 'object',
             function: this.zaddSingle,
         },
         zremSingle: {
-            kind: 'string',
+            kind: 'literal',
             function: this.zremSingle,
         },
     }
@@ -464,7 +475,7 @@ export class ExtenderBase extends RedisExtend {
             function: this.mget,
         },
         set: {
-            kind: 'string',
+            kind: 'literal',
             function: this.set,
         },
         jsonGet: {
@@ -476,7 +487,7 @@ export class ExtenderBase extends RedisExtend {
             function: this.jsonMget,
         },
         jsonSet: {
-            kind: 'json',
+            kind: 'object',
             function: this.jsonSet,
         },
         scan: {
@@ -492,15 +503,15 @@ export class ExtenderBase extends RedisExtend {
             function: this.zrem,
         },
         zrange: {
-            kind: 'json',
+            kind: 'object',
             function: this.zrange,
         },
         zrank: {
-            kind: 'string',
+            kind: 'literal',
             function: this.zrank,
         },
         zrevrank: {
-            kind: 'string',
+            kind: 'literal',
             function: this.zrevrank,
         },
     }
@@ -520,10 +531,10 @@ type methodType = {
               function: (key: string, opts?: JsonObj) => Promise<JsonType>
           }
         | {
-              kind: 'string'
+              kind: 'literal'
               function: (
                   key: string,
-                  str: string,
+                  str: JsonLiteral,
                   opts?: JsonObj,
               ) => Promise<JsonType>
           }
@@ -532,7 +543,7 @@ type methodType = {
               function: (key: string[], opts?: JsonObj) => Promise<JsonType>
           }
         | {
-              kind: 'json'
+              kind: 'object'
               function: <T extends JsonObj>(
                   key: string,
                   data: T,
@@ -542,6 +553,14 @@ type methodType = {
         | {
               kind: 'array'
               function: <T extends JsonType[]>(
+                  key: string,
+                  data: T,
+                  opts?: JsonObj,
+              ) => Promise<JsonType>
+          }
+        | {
+              kind: 'any'
+              function: <T extends JsonType>(
                   key: string,
                   data: T,
                   opts?: JsonObj,

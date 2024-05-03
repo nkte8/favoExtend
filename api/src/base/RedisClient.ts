@@ -5,6 +5,7 @@ import {
     JsonType,
     JsonObj,
     JsonTypeNullAble,
+    JsonLiteral,
     // OptValue,
 } from './availableTypes'
 
@@ -165,16 +166,16 @@ export class RedisClient {
      */
     set = async (
         key: string,
-        value: string,
+        value: JsonLiteral,
         opts?: JsonObj,
-    ): Promise<undefined | string> => {
+    ): Promise<undefined | JsonLiteral> => {
         try {
             this.verifyKey(key)
             const verifiedOpts = this.verifyParameter(
                 opts,
                 this.ZodSetCommandOptions,
             )
-            const result: string | null = await this.Redis.set(
+            const result: JsonLiteral | null = await this.Redis.set(
                 key,
                 value,
                 verifiedOpts,
@@ -518,7 +519,10 @@ export class RedisClient {
      * @param values sortedSet item name
      * @returns rank number
      */
-    zrank = async (key: string, value: string): Promise<number | undefined> => {
+    zrank = async (
+        key: string,
+        value: JsonLiteral,
+    ): Promise<number | undefined> => {
         try {
             this.verifyKey(key)
             const result = await this.Redis.zrank(key, value)
@@ -544,7 +548,7 @@ export class RedisClient {
      */
     zrevrank = async (
         key: string,
-        value: string,
+        value: JsonLiteral,
     ): Promise<number | undefined> => {
         try {
             this.verifyKey(key)
