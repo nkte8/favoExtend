@@ -812,7 +812,7 @@ export class RedisClient {
      * @param key key
      * @param input.min start index
      * @param input.max end index
-     * @returns sorted list of value
+     * @returns sortedSet of value
      */
     zrange = async (
         key: string,

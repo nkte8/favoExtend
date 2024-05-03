@@ -38,7 +38,7 @@ export class Extender extends ExtenderBase {
      * @param opts.regex Regex value
      * @param opts.replace Special replacement patterns:
      *   https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/replace
-     * @returns sorted list of value
+     * @returns sortedSet of value
      */
     arrayReplace = async (opts?: JsonObj): Promise<JsonType> => {
         try {
