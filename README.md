@@ -108,4 +108,4 @@ If you need to Extend API, see [Extend Guide(README.md)](/api/src/README.md).
 
 [Install Terraform | Terraform | HashiCorp Developer](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/install-cli)    
 [Support Cloudflare r2 for storing Terraform state #33847](https://github.com/hashicorp/terraform/issues/33847#issuecomment-1854605813)  
-[Japanese Reference](https://zenn.dev/nkte8/books/favoextend-manual)  
+[Japanese Reference(Zenn/favoExtend マニュアル)](https://zenn.dev/nkte8/books/favoextend-manual)  
