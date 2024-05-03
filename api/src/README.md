@@ -47,12 +47,13 @@ By default, you cau use these `functionName` below.
 | jsonMget | [upstash JSON.MGET wrapper](https://upstash.com/docs/oss/sdks/py/redis/commands/json/mget). get values to json data from DB by Multikeys. if not json, skip value. |
 | jsonSet | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. |
 | jsonDel | [upstash JSON.DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/del). del value to json data from DB. |
-| scan | [upstash SCAN wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/scan). Get all string values with key-pattern matched. If no keys matched, throw Error. |
-| typeGrep | Pick keys by type from key array |
-| zadd | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add multi items |
-| zaddSingle | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add single item |
-| zrem | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem), remove multi items |
-| zremSingle | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem), remove single item |
+| scan | [upstash SCAN wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/scan). Get keys with key-pattern matched by grob style. If no keys matched, throw Error. |
+| scanRegex | Get keys with key-pattern matched by regex pattern match. If no keys matched, throw Error. |
+| typeGrep | Pick keys by type from key array. |
+| zadd | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add multi items. |
+| zaddSingle | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add single item. |
+| zrem | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem), remove multi items. |
+| zremSingle | [upstash ZREM wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrem), remove single item. |
 | zrank | [upstash ZRANK wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrank), return current rank(low-high) of member. |
 | zrevrank | [upstash ZREVRANK wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrevrank), return current rank(high-low) of member. |
 | zrange | [upstash ZRANGE wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zrange), return ranking, part of value or all. |
