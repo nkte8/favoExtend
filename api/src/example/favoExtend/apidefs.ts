@@ -176,7 +176,7 @@ export const GetUser = new Definition(
  *    output: <number = #0>
  *   auth definition -> ... <---- Extend function(your define)
  *    key: undefined
- *    opts: {
+ *    input: {
  *       verifySrc: "{pencoded}"  <-- get pencoded from Request body
  *       verifyDist: "{#0}" <--- get value from Redis action(#0) output
  *      }
@@ -208,7 +208,7 @@ export const Login = new Definition(
         },
         {
             functionName: 'auth',
-            opts: {
+            input: {
                 verifySrc: '${#.passwd}',
                 verifyDist: '${#0}',
             },
@@ -231,6 +231,13 @@ export const Login = new Definition(
  *     token: <string or undefined>
  *   }
  *   Will Response -> { count: <number | redis action #1 result> }
+ *  auth definition -> ... <---- Extend function(your define)
+ *   key: undefined
+ *   input: {
+ *      verifySrc: "{pencoded}"  <-- get pencoded from Request body
+ *      verifyDist: "{#0}" <--- get value from Redis action(#0) output
+ *     }
+ *   output: undefined
  *  Redis action(#0) -> Incr
  *   Incr definition -> ...
  *    key: user/<handle string>/<id string>,
@@ -263,7 +270,7 @@ export const PostFavoWithAuth = new Definition(
         },
         {
             functionName: 'auth',
-            opts: {
+            input: {
                 verifySrc: '${#.token}',
                 verifyDist: '${#0}',
             },

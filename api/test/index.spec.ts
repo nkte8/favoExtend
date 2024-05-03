@@ -29,7 +29,8 @@ describe('API test', () => {
                 },
             },
         )
-        expect(await response.json()).toMatchObject({
+        const apiResult = await response.json()
+        expect(apiResult).toMatchObject({
             error: 'Not Found',
             message: 'Data not found error',
         })
@@ -41,7 +42,8 @@ describe('API test', () => {
                 'Content-type': 'application/json',
             },
         })
-        expect(await response.json()).toMatchObject({
+        const apiResult = await response.json()
+        expect(apiResult).toMatchObject({
             error: 'Invalid Request',
             message: 'Request coitains invalid inputs',
         })
@@ -56,11 +58,12 @@ describe('API test', () => {
                 },
             },
         )
+        const apiResult = await response.json()
         // get value. default is 0
         const count = await RedisClient.get('favo/no-id-defined').then((value) =>
             value === null ? 0 : value,
         )
-        expect(await response.json()).toMatchObject({
+        expect(apiResult).toMatchObject({
             count: count,
         })
     })
@@ -76,7 +79,8 @@ describe('API test', () => {
                 passwd: 'testpasswd',
             }),
         })
-        expect(await response.json()).toMatchObject({
+        const apiResult = await response.json()
+        expect(apiResult).toMatchObject({
             error: 'Invalid Request',
             message: 'Request coitains invalid inputs',
         })
@@ -94,7 +98,8 @@ describe('API test', () => {
                 passwd: 'testpasswd',
             }),
         })
-        expect(await response.json()).toMatchObject({
+        const apiResult = await response.json()
+        expect(apiResult).toMatchObject({
             result: 'ok',
         })
     })
@@ -109,8 +114,9 @@ describe('API test', () => {
                 passwd: 'testpasswd',
             }),
         })
+        const apiResult = await response.json()
         const token = await RedisClient.get('token/testuser')
-        expect(await response.json()).toMatchObject({
+        expect(apiResult).toMatchObject({
             token: token,
         })
     })
@@ -127,6 +133,7 @@ describe('API test', () => {
                 id: 'testid',
             }),
         })
+        const apiResult = await response.json()
         // get value. default is 0
         const user = await RedisClient.get('user/testuser/testid').then(
             (value) => (value === null ? 0 : value),
@@ -134,7 +141,7 @@ describe('API test', () => {
         const count = await RedisClient.get('favo/testid').then((value) =>
             value === null ? 0 : value,
         )
-        expect(await response.json()).toMatchObject({
+        expect(apiResult).toMatchObject({
             count: count,
             user: user,
         })
@@ -149,6 +156,7 @@ describe('API test', () => {
                 },
             },
         )
+        const apiResult = await response.json()
         // get value. default is 0
         const [_, keys] = await RedisClient.scan(0, {
             match: 'user/testuser/*',
@@ -156,7 +164,7 @@ describe('API test', () => {
         const values: number[] =
             keys.length === 0 ? [0] : await RedisClient.mget(keys)
         const count = values.reduce((a, x) => a + x)
-        expect(await response.json()).toMatchObject({
+        expect(apiResult).toMatchObject({
             name: 'TestUser',
             count: count,
         })

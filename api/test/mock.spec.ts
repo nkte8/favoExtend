@@ -1,6 +1,6 @@
-// test/index.spec.ts
+// test/mock.spec.ts
 import { env } from 'cloudflare:test'
-import { describe, it, expect, beforeAll } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { FavoExtend } from '@/example/favoExtend'
 import * as defs from './mockdefs'
 import { Redis } from '@upstash/redis/cloudflare'
@@ -24,13 +24,7 @@ const MockClient = new FavoExtend(env, [
     defs.TestValuesToHalf
 ])
 
-const sleep = (t: number) => new Promise((resolve) => setTimeout(resolve, t))
-
-beforeAll(async () => {
-    await sleep(1)
-})
-
-describe('API test', () => {
+describe('Mock test', () => {
     it('[Positive] POST create mock-user test', async () => {
         const apiResult = await MockClient.apiResult({
             httpMethod: 'POST',
@@ -163,7 +157,7 @@ describe('API test', () => {
             key2: 'value2',
         })
     })
-    it('[Positive] Redefine test2', async () => {
+    it('[Positive] Redefine with input test', async () => {
         const apiResult = await MockClient.apiResult({
             httpMethod: 'GET',
             requestUrl: new URL(

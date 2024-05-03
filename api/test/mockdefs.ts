@@ -16,7 +16,7 @@ export const TestGetTokens = new Definition(
         {
             functionName: 'typeGrep',
             output: z.string().array(),
-            opts: {
+            input: {
                 keys: '${#0}',
                 type: 'string',
             },
@@ -44,7 +44,7 @@ export const TestGetUsers = new Definition(
         {
             functionName: 'typeGrep',
             output: z.string().array(),
-            opts: {
+            input: {
                 keys: '${#0}',
                 type: 'json',
             },
@@ -146,7 +146,7 @@ export const TestRmRankingAllUser = new Definition(
         },
         {
             functionName: 'arrayReplace',
-            opts: {
+            input: {
                 array: '${#0}',
                 regex: '^user\\/([^${}]*)',
                 replace: '$1',
@@ -174,13 +174,22 @@ export const TestAddRankingAllUser = new Definition(
             output: z.string().array(),
         },
         {
+            functionName: 'arrayReplace',
+            input: {
+                array: '${#0}',
+                regex: '.*',
+                replace: '$&/*',
+            },
+            output: z.string().array(),
+        },
+        {
             functionName: 'incrSumMultiKeys',
-            multiKeysRef: '${#0}',
+            multiKeysRef: '${#1}',
             output: z.number().array(),
         },
         {
             functionName: 'arrayReplace',
-            opts: {
+            input: {
                 array: '${#0}',
                 regex: '^user\\/([^${}]*)',
                 replace: '$1',
@@ -189,9 +198,9 @@ export const TestAddRankingAllUser = new Definition(
         },
         {
             functionName: 'objectExtract',
-            opts: {
-                score: '${#1}',
-                member: '${#2}',
+            input: {
+                score: '${#2}',
+                member: '${#3}',
             },
             output: z
                 .object({
@@ -203,7 +212,7 @@ export const TestAddRankingAllUser = new Definition(
         {
             keyRef: 'rank/favo',
             functionName: 'zadd',
-            input: '${#3}',
+            input: '${#4}',
         },
     ],
 )
@@ -263,7 +272,7 @@ export const TestValuesToHalf = new Definition(
     [
         {
             functionName: 'numSum',
-            input: "${#}",
+            input: '${#}',
             output: z.number(),
         },
         {

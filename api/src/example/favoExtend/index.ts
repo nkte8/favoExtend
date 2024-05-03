@@ -1,8 +1,9 @@
-import { Extender } from "@/base/Extender"
+import { Extender } from '@/base/Extender'
 import * as defs from './apidefs'
-import { JsonObj, JsonType } from '@/base/availableTypes'
+import { JsonObj } from '@/base/availableTypes'
 import { ExtendError } from '@/base/ExtendError'
 import { Definition } from '@/base/Definition'
+import { z } from 'zod'
 
 export class FavoExtend extends Extender {
     constructor(
@@ -27,43 +28,33 @@ export class FavoExtend extends Extender {
         // Register your extend functions
         this.addMethod({
             auth: {
-                kind: 'method',
+                kind: "objectNokey",
                 function: this.auth,
             },
             generateToken: {
                 kind: 'keyOnly',
                 function: this.generateToken,
             },
-            incrSumMultiKeys: {
-                kind: 'multiKey',
-                function: this.incrSumMultiKeys,
-            },
         })
     }
 
     /**
      * Extend example: Auth function, compare two value
-     * @param opts.verifySrc compare value A
-     * @param opts.verifyDist compare value B
+     * @param input.verifySrc compare value A
+     * @param input.verifyDist compare value B
      */
-    auth = async (opts?: JsonObj): Promise<undefined> => {
+    auth = async (input: JsonObj): Promise<undefined> => {
         try {
-            // when you define function, recommend validation
-
-            // console.debug(`DEBUG: opts=${JSON.stringify(opts)}`)
-            if (
-                typeof opts === 'undefined' ||
-                typeof opts['verifySrc'] === 'undefined' ||
-                typeof opts['verifyDist'] === 'undefined'
-            ) {
-                throw new ExtendError({
-                    message: 'Invalid Data found in redis',
-                    status: 500,
-                    name: 'Invalid Data',
-                })
-            }
-            const decodedVerifyPw = opts['verifySrc']
-            const decodedSavedPw = opts['verifyDist']
+            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
+            const verifiedInput = this.verifyParameter(
+                input,
+                z.object({
+                    verifySrc: z.string(),
+                    verifyDist: z.string(),
+                }),
+            )
+            const decodedVerifyPw = verifiedInput['verifySrc']
+            const decodedSavedPw = verifiedInput['verifyDist']
             if (decodedSavedPw !== decodedVerifyPw) {
                 throw new ExtendError({
                     message: 'Authentication Failed',
@@ -106,33 +97,6 @@ export class FavoExtend extends Extender {
                 })
             }
             return token
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error')
-        }
-    }
-
-    incrSumMultiKeys = async (keys: string[]): Promise<JsonType[]> => {
-        try {
-            const result = await Promise.all(
-                keys.map(async (key) => {
-                    const count = await this.incrSum(`${key}/*`)
-                    if (typeof count === "undefined") {
-                        return 0
-                    }
-                    return count
-                }),
-            )
-            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
-            return result
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
                 throw e

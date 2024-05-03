@@ -39,6 +39,7 @@ By default, you cau use these `functionName` below.
 | del | [upstash DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/del). delete DB value. |
 | incr | [upstash INCR wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/incr). incriment DB value. |
 | incrSum | Get sum of DB values. Input keyRef like `value/*` and return sum. If collected values contain not-number, skip value. |
+| incrSumMultiKeys | incrSum multikey wrapper. Get sums of DB values. Input multiKeysRef like `value/*` and return sum array. |
 | mget | [upstash MGET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/mget). get DB values as string by Multikeys. if not string, skip value. |
 | get | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, return undefined. |
 | getThrowError | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, throw Error. |
@@ -141,16 +142,19 @@ You can know Extend functions example in file `FavoExtend.ts`. If you need to co
 
 When you add your function, you need to set `kind` by function input below.
 
-| Your function input                                  | kind value |
-| ---------------------------------------------------- | ---------- |
-| no input(or only options[^1]) need                   | methodOnly |
-| only key of Redis(and options) need                  | keyOnly    |
-| keys(and options) need                               | multiKey   |
-| key and Json Literal(and options) need               | literal    |
-| key and Json Object(and options) need                | object     |
-| key and Json Array(and options) need                 | array      |
-| key and Json Object/Array/literal(and options) need  | any        |
-| only input of Object/Array/literal(and options) need | anyNokey   |
+| Your function input                                  | kind value   |
+| ---------------------------------------------------- | ------------ |
+| no input(or only options[^1]) need                   | methodOnly   |
+| only key of Redis(and options) need                  | keyOnly      |
+| keys(and options) need                               | multiKey     |
+| key and Json Literal(and options) need               | literal      |
+| key and Json Object(and options) need                | object       |
+| key and Json Array(and options) need                 | array        |
+| key and Json Object/Array/literal(and options) need  | any          |
+| only input of literal(and options) need              | literalNokey |
+| only input of Object(and options) need               | objectNokey  |
+| only input of Array(and options) need                | arrayNokey   |
+| only input of Object/Array/literal(and options) need | anyNokey     |
 
 [^1]: options is un managed key-value object. need to control in function.
 
