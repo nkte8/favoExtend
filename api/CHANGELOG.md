@@ -1,5 +1,14 @@
 # favoExtend
 
+## 1.0.4
+
+### Patch Changes
+
+- jsonMgetからエラー出力を削除
+  - jsonMgetにおいても標準のRedis関数の仕様に準拠し、undefined(null)を返すように修正しました。
+- jsonGetをjsonGetとjsonGetThrowErrorに分岐
+  - getとgetThrowErrorと同様に、jsonについてもエラーの出力有無を関数として分断しました
+
 ## 1.0.3
 
 ### Patch Changes
