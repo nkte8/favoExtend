@@ -1,4 +1,4 @@
-export type JsonLiteral = boolean | number | string | undefined 
+export type JsonLiteral = boolean | number | string | undefined
 export type JsonType = JsonLiteral | JsonType[] | JsonObj
 export type JsonObj = { [key: string]: JsonType }
 

@@ -1,5 +1,15 @@
 # favoExtend
 
+## 1.0.3
+
+### Patch Changes
+
+- jsonDelの追加漏れ修正
+  - jsonDelがmethodsに追加されておらず、呼び出しできなかった問題を修正しました。
+- jsonSetSafe関数を追加
+  - jsonSet関数では、DBの既存の値を丸ごと置き換える形で上書きしてしまい、データの追加などができない状況でした。
+    - jsonSetSafe関数を用いることにより、既存のパスの設定対象以外の値を上書きをせず追加ができるようになりました。
+
 ## 1.0.2
 
 ### Patch Changes

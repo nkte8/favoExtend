@@ -282,3 +282,64 @@ export const TestValuesToHalf = new Definition(
         },
     ],
 )
+
+export const TestJsonSafeadd = new Definition(
+    {
+        path: '/safeaddDate',
+        method: 'POST',
+        input: z.object({
+            handle: z.string(),
+        }),
+        output: {
+            name: '${#2.name}',
+            refreshedAt: '${#2.refreshedAt}',
+        },
+    },
+    [
+        {
+            functionName: 'nowUnixTime',
+            opts: {
+                tdiff: 9,
+            },
+            output: z.number(),
+        },
+        {
+            keyRef: 'user/${#.handle}',
+            functionName: 'jsonSetSafe',
+            input: {
+                refreshedAt: '${#0}',
+            },
+        },
+        {
+            keyRef: 'user/${#.handle}',
+            functionName: 'jsonGet',
+            output: z.object({
+                name: z.string(),
+                passwd: z.string(),
+                refreshedAt: z.number(),
+            }),
+        },
+    ],
+)
+
+export const TestJsonDel = new Definition(
+    {
+        path: '/jsonDel',
+        method: 'POST',
+        input: z.object({
+            handle: z.string(),
+        }),
+        output: {
+            result: 'OK',
+        },
+    },
+    [
+        {
+            keyRef: 'user/${#.handle}',
+            functionName: 'jsonDel',
+            opts: {
+                path: '$.refreshedAt',
+            },
+        },
+    ],
+)

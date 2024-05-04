@@ -86,7 +86,7 @@ export class RedisExtend extends RedisClient {
                 .replace(RegExp(/(\^|\(\?<=)(.*)/), '$2')
                 .replace(RegExp(/\)/), '')
                 .replace(RegExp(/[.{$([\\].*/), '*')
-            console.debug(`DEBUG wildcardPattern=${wildcardPattern}`)
+            // console.debug(`DEBUG wildcardPattern=${wildcardPattern}`)
             // search pattern
             const resultKeys = await this.scanAll(wildcardPattern)
             // console.debug(`DEBUG: regex=${regex}`)
@@ -301,6 +301,68 @@ export class RedisExtend extends RedisClient {
                 })
             }
             throw new Error('Unexpected Error at zrem')
+        }
+    }
+    /** jsonSetSafe: Write db value of json data, not replace json path(append or refresh).
+     * @param key DB key
+     * @param input append or refresh key-value
+     * @param opts.path default '$', set get json path
+     */
+    jsonSetSafe = async <T extends JsonObj>(
+        key: string,
+        value: T,
+        opts?: JsonObj,
+    ): Promise<undefined> => {
+        try {
+            this.verifyKey(key)
+            const verifiedOpts = z
+                .object({ path: z.string().default('$') })
+                .or(z.undefined())
+                .parse(opts)
+            const path: string =
+                typeof verifiedOpts !== 'undefined' ? verifiedOpts.path : '$'
+            // const registerValue = this.replaceUndefinedToNull(value)
+            const results = await Promise.all(
+                Object.keys(value).map(async (jkey) => {
+                    const currentValue = z
+                        .string()
+                        .or(z.number())
+                        .or(z.boolean())
+                        .or(z.record(z.any()))
+                        .or(
+                            z
+                                .string()
+                                .or(z.number())
+                                .or(z.boolean())
+                                .or(z.record(z.any()))
+                                .array(),
+                        )
+                        .parse(value[jkey])
+                    return await this.Redis.json.set(
+                        key,
+                        `${path}.${jkey}`,
+                        currentValue,
+                    )
+                }),
+            )
+            if (results.includes(null)) {
+                throw new ExtendError({
+                    message: `Failed to SET value by redis client`,
+                    status: 500,
+                    name: 'Write Failed',
+                })
+            }
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at jsonSet')
         }
     }
 }
