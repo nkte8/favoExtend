@@ -21,7 +21,7 @@ const MockClient = new FavoExtend(env, [
     defs.TestAddRankingAllUser,
     defs.TestRedefine,
     defs.TestRedefine2,
-    defs.TestValuesToHalf
+    defs.TestValuesToHalf,
 ])
 
 describe('Mock test', () => {
@@ -44,10 +44,18 @@ describe('Mock test', () => {
             httpMethod: 'GET',
             requestUrl: new URL('https://example.com/allActivetoken'),
         })
-        const [_, keys] = await RedisClient.scan(0, { match: 'token/*' })
+        let cursor: number = 0
+        let resultKeys: string[] = []
+        do {
+            const [ncursor, keys] = await RedisClient.scan(cursor, {
+                match: 'token/*',
+            })
+            resultKeys = resultKeys.concat(keys)
+            cursor = ncursor
+        } while (cursor !== 0)
         const keysAvailable: string[] = []
         await Promise.all(
-            keys.map(async (key) => {
+            resultKeys.map(async (key) => {
                 const type = await RedisClient.type(key)
                 if (type === 'string') {
                     keysAvailable.push(key)
@@ -62,10 +70,18 @@ describe('Mock test', () => {
             httpMethod: 'GET',
             requestUrl: new URL('https://example.com/allUsers'),
         })
-        const [_, keys] = await RedisClient.scan(0, { match: 'user/*' })
+        let cursor: number = 0
+        let resultKeys: string[] = []
+        do {
+            const [ncursor, keys] = await RedisClient.scan(cursor, {
+                match: 'user/*',
+            })
+            resultKeys = resultKeys.concat(keys)
+            cursor = ncursor
+        } while (cursor !== 0)
         const keysAvailable: string[] = []
         await Promise.all(
-            keys.map(async (key) => {
+            resultKeys.map(async (key) => {
                 const type = (await RedisClient.type(key)) as string
                 if (type === 'json') {
                     keysAvailable.push(key)
@@ -172,10 +188,8 @@ describe('Mock test', () => {
     it('[Positive] numXX function test', async () => {
         const apiResult = await MockClient.apiResult({
             httpMethod: 'POST',
-            requestUrl: new URL(
-                'https://example.com/half',
-            ),
-            input: [10,20,30]
+            requestUrl: new URL('https://example.com/half'),
+            input: [10, 20, 30],
         })
         expect(apiResult).toEqual(30)
     })
