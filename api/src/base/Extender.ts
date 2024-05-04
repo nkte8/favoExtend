@@ -30,6 +30,10 @@ export class Extender extends ExtenderBase {
                 kind: 'objectNokey',
                 function: this.arrayReplace,
             },
+            nowUnixTime: {
+                kind: 'method',
+                function: this.nowUnixTime,
+            },
             defineRef: {
                 kind: 'anyNokey',
                 function: this.defineRef,
@@ -83,7 +87,33 @@ export class Extender extends ExtenderBase {
             throw new Error('Unexpected Error at arrayReplace')
         }
     }
-
+    /**
+     * nowUnixTime: Output unix time of server
+     * @param opts.tdiff set time difference(hour)
+     * @returns return unixtime(number, unixtime(second))
+     */
+    nowUnixTime = async (opts?: JsonObj): Promise<number> => {
+        try {
+            const verifiedOpts = z
+                .object({
+                    tdiff: z.number().default(0),
+                })
+                .optional()
+                .parse(opts)
+            const tdiff =
+                typeof verifiedOpts !== 'undefined' ? verifiedOpts.tdiff : 0
+            return Date.now() / 1000 + tdiff * 3600
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at defineRef')
+        }
+    }
     /**
      * objectExtract: merge two list to object
      * @param opts Array of object with key
