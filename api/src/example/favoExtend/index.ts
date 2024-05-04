@@ -28,7 +28,7 @@ export class FavoExtend extends Extender {
         // Register your extend functions
         this.addMethod({
             auth: {
-                kind: "objectNokey",
+                kind: 'objectNokey',
                 function: this.auth,
             },
             generateToken: {
@@ -46,13 +46,12 @@ export class FavoExtend extends Extender {
     auth = async (input: JsonObj): Promise<undefined> => {
         try {
             // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
-            const verifiedInput = this.verifyParameter(
-                input,
-                z.object({
+            const verifiedInput = z
+                .object({
                     verifySrc: z.string(),
                     verifyDist: z.string(),
-                }),
-            )
+                })
+                .parse(input)
             const decodedVerifyPw = verifiedInput['verifySrc']
             const decodedSavedPw = verifiedInput['verifyDist']
             if (decodedSavedPw !== decodedVerifyPw) {

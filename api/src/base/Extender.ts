@@ -23,12 +23,16 @@ export class Extender extends ExtenderBase {
         // Register your extend functions
         this.addMethod({
             objectExtract: {
-                kind: "objectNokey",
+                kind: 'objectNokey',
                 function: this.objectExtract,
             },
             arrayReplace: {
                 kind: 'objectNokey',
                 function: this.arrayReplace,
+            },
+            nowUnixTime: {
+                kind: 'method',
+                function: this.nowUnixTime,
             },
             defineRef: {
                 kind: 'anyNokey',
@@ -55,14 +59,13 @@ export class Extender extends ExtenderBase {
     arrayReplace = async (input: JsonObj): Promise<JsonType> => {
         try {
             // console.debug(`DEBUG: opts=${JSON.stringify(opts)}`)
-            const verifiedOpts = this.verifyParameter(
-                input,
-                z.object({
+            const verifiedOpts = z
+                .object({
                     array: z.string().array(),
                     regex: z.string(),
                     replace: z.string(),
-                }),
-            )
+                })
+                .parse(input)
             const result = verifiedOpts.array.map((value) => {
                 const replaced = value.replace(
                     new RegExp(verifiedOpts.regex, 'g'),
@@ -84,7 +87,33 @@ export class Extender extends ExtenderBase {
             throw new Error('Unexpected Error at arrayReplace')
         }
     }
-
+    /**
+     * nowUnixTime: Output unix time of server
+     * @param opts.tdiff set time difference(hour)
+     * @returns return unixtime(number, unixtime(second))
+     */
+    nowUnixTime = async (opts?: JsonObj): Promise<number> => {
+        try {
+            const verifiedOpts = z
+                .object({
+                    tdiff: z.number().default(0),
+                })
+                .optional()
+                .parse(opts)
+            const tdiff =
+                typeof verifiedOpts !== 'undefined' ? verifiedOpts.tdiff : 0
+            return Date.now() / 1000 + tdiff * 3600
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at defineRef')
+        }
+    }
     /**
      * objectExtract: merge two list to object
      * @param opts Array of object with key
