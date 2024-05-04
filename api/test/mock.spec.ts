@@ -22,6 +22,8 @@ const MockClient = new FavoExtend(env, [
     defs.TestRedefine,
     defs.TestRedefine2,
     defs.TestValuesToHalf,
+    defs.TestJsonSafeadd,
+    defs.TestJsonDel,
 ])
 
 describe('Mock test', () => {
@@ -192,5 +194,37 @@ describe('Mock test', () => {
             input: [10, 20, 30],
         })
         expect(apiResult).toEqual(30)
+    })
+    it('[Positive] jsonSafeAdd function test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'POST',
+            requestUrl: new URL('https://example.com/safeaddDate'),
+            input: {
+                handle: 'testuser',
+            },
+        })
+        let date: number | number[] | null = await RedisClient.json.get(
+            'user/testuser',
+            '$.refreshedAt',
+        )
+        if (date !== null && Array.isArray(date)) {
+            date = date[0]
+        }
+        expect(apiResult).toMatchObject({
+            name: 'TestUser',
+            refreshedAt: date,
+        })
+    })
+    it('[Positive] jsonDel function test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'POST',
+            requestUrl: new URL('https://example.com/jsonDel'),
+            input: {
+                handle: 'testuser',
+            },
+        })
+        expect(apiResult).toMatchObject({
+            result: 'OK',
+        })
     })
 })

@@ -47,6 +47,7 @@ By default, you cau use these `functionName` below.
 | jsonGet | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. if not json, skip value. |
 | jsonMget | [upstash JSON.MGET wrapper](https://upstash.com/docs/oss/sdks/py/redis/commands/json/mget). get values to json data from DB by Multikeys. if not json, skip value. |
 | jsonSet | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. |
+| jsonSetSafe | Set value to json data from DB. this function not replace json path like jsonSet, only refresh same key or append key. |
 | jsonDel | [upstash JSON.DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/del). del value to json data from DB. |
 | scanAll | Get keys with key-pattern matched by grob style while cursor become 0. If no keys matched, throw Error. |
 | scanRegex | Get keys with key-pattern matched by regex pattern match while cursor become 0. If no keys matched, throw Error. |

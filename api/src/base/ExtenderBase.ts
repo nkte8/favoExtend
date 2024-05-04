@@ -527,7 +527,7 @@ export class ExtenderBase extends RedisExtend {
             function: this.incrSumMultiKeys,
         },
         typeGrep: {
-            kind: "objectNokey",
+            kind: 'objectNokey',
             function: this.typeGrep,
         },
         zaddSingle: {
@@ -573,6 +573,14 @@ export class ExtenderBase extends RedisExtend {
         jsonSet: {
             kind: 'object',
             function: this.jsonSet,
+        },
+        jsonSetSafe: {
+            kind: 'object',
+            function: this.jsonSetSafe,
+        },
+        jsonDel: {
+            kind: 'keyOnly',
+            function: this.jsonDel,
         },
         scanAll: {
             kind: 'keyOnly',
