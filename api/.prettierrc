@@ -7,7 +7,7 @@
     "proseWrap": "never",
     "overrides": [
         {
-            "files": "*.json",
+            "files": "*.md",
             "options": {
                 "tabWidth": 2
             }

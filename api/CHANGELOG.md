@@ -1,5 +1,15 @@
 # favoExtend
 
+## 1.0.2
+
+### Patch Changes
+
+- `functionName: nowUnixTime`を追加
+  - 現在時刻をUnixTime(s,float)で取得します。
+- `verifyParameter`関数の削除
+  - 型変換がうまく行っていないパターンがあったため、関数を終了しました。
+  - 以後は`zod`ライブラリを用いて、`z.(zodObject).parse()`で直に変換してください。
+
 ## 1.0.1
 
 ### Patch Changes
