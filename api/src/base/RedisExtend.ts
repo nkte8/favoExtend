@@ -206,13 +206,12 @@ export class RedisExtend extends RedisClient {
      */
     typeGrep = async (input: JsonObj): Promise<string[]> => {
         try {
-            const verifiedOpts = this.verifyParameter(
-                input,
-                z.object({
+            const verifiedOpts = z
+                .object({
                     keys: z.string().array(),
                     type: this.ZodType,
-                }),
-            )
+                })
+                .parse(input)
             const result: string[] = []
             await Promise.all(
                 verifiedOpts.keys.map(async (key) => {
@@ -250,18 +249,9 @@ export class RedisExtend extends RedisClient {
     ): Promise<JsonType | undefined> => {
         try {
             this.verifyKey(key)
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                this.ZodZaddCommandOptions,
-            )
-            const verifiedValue = this.verifyParameter(
-                values,
-                this.ZodSortedSet,
-            )
+            const verifiedOpts = this.ZodZaddCommandOptions.parse(opts)
+            const verifiedValue = this.ZodSortedSet.parse(values)
             let result: null | number | undefined
-            if (typeof verifiedValue === 'undefined') {
-                return
-            }
             if (verifiedOpts !== undefined) {
                 result = await this.Redis.zadd(key, verifiedOpts, verifiedValue)
             } else {

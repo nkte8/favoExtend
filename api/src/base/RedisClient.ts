@@ -38,20 +38,6 @@ export class RedisClient {
         })
         return result
     }
-    protected verifyParameter<T>(badopts: unknown, use: z.ZodSchema<T>) {
-        try {
-            return use.parse(badopts)
-        } catch (e: unknown) {
-            if (e instanceof z.ZodError) {
-                throw new ExtendError({
-                    message: `${e.name}`,
-                    status: 500,
-                    name: 'Invalid Opts',
-                })
-            }
-            throw new Error('Unexpected Error at verifyParameter')
-        }
-    }
     protected verifyKey = async (key?: string) => {
         const invalidkeyRefRegex = new RegExp(/\/{2,}/)
         if (typeof key !== 'undefined' && invalidkeyRefRegex.test(key)) {
@@ -171,10 +157,7 @@ export class RedisClient {
     ): Promise<undefined | JsonLiteral> => {
         try {
             this.verifyKey(key)
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                this.ZodSetCommandOptions,
-            )
+            const verifiedOpts = this.ZodSetCommandOptions.parse(opts)
             const result: JsonLiteral | null = await this.Redis.set(
                 key,
                 value,
@@ -213,14 +196,12 @@ export class RedisClient {
     jsonGet = async (key: string, opts?: JsonObj): Promise<JsonType> => {
         try {
             this.verifyKey(key)
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                z.object({ path: z.string().default('$') }).or(z.undefined()),
-            )
+            const verifiedOpts = z
+                .object({ path: z.string().default('$') })
+                .or(z.undefined())
+                .parse(opts)
             const path: string =
-                typeof verifiedOpts?.path !== 'undefined'
-                    ? verifiedOpts.path
-                    : '$'
+                typeof verifiedOpts !== 'undefined' ? verifiedOpts.path : '$'
             const result: JsonTypeNullAble = await this.Redis.json.get(
                 key,
                 path,
@@ -261,14 +242,12 @@ export class RedisClient {
      */
     jsonMget = async (keys: string[], opts?: JsonObj): Promise<JsonType> => {
         try {
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                z.object({ path: z.string().default('$') }).or(z.undefined()),
-            )
+            const verifiedOpts = z
+                .object({ path: z.string().default('$') })
+                .or(z.undefined())
+                .parse(opts)
             const path: string =
-                typeof verifiedOpts?.path !== 'undefined'
-                    ? verifiedOpts.path
-                    : '$'
+                typeof verifiedOpts !== 'undefined' ? verifiedOpts.path : '$'
             const mgetResult: JsonTypeNullAble = await this.Redis.json.mget(
                 keys,
                 path,
@@ -322,14 +301,12 @@ export class RedisClient {
     ): Promise<undefined> => {
         try {
             this.verifyKey(key)
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                z.object({ path: z.string().default('$') }).or(z.undefined()),
-            )
+            const verifiedOpts = z
+                .object({ path: z.string().default('$') })
+                .or(z.undefined())
+                .parse(opts)
             const path: string =
-                typeof verifiedOpts?.path !== 'undefined'
-                    ? verifiedOpts.path
-                    : '$'
+                typeof verifiedOpts !== 'undefined' ? verifiedOpts.path : '$'
             // const registerValue = this.replaceUndefinedToNull(value)
             const result: string | null = await this.Redis.json.set(
                 key,
@@ -363,14 +340,12 @@ export class RedisClient {
     jsonDel = async (key: string, opts?: JsonObj): Promise<undefined> => {
         try {
             this.verifyKey(key)
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                z.object({ path: z.string().default('$') }).or(z.undefined()),
-            )
+            const verifiedOpts = z
+                .object({ path: z.string().default('$') })
+                .or(z.undefined())
+                .parse(opts)
             const path: string =
-                typeof verifiedOpts?.path !== 'undefined'
-                    ? verifiedOpts.path
-                    : '$'
+                typeof verifiedOpts !== 'undefined' ? verifiedOpts.path : '$'
             const result = await this.Redis.json.del(key, path)
             if (result === 0) {
                 throw new ExtendError({
@@ -407,14 +382,8 @@ export class RedisClient {
     ): Promise<JsonType | undefined> => {
         try {
             this.verifyKey(key)
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                this.ZodZaddCommandOptions,
-            )
-            const verifiedValues = this.verifyParameter(
-                values,
-                this.ZodSortedSet.array(),
-            )
+            const verifiedOpts = this.ZodZaddCommandOptions.parse(opts)
+            const verifiedValues = this.ZodSortedSet.array().parse(values)
             let result: null | number | undefined
             const verifiedFirst = verifiedValues.shift()
             if (typeof verifiedFirst === 'undefined') {
@@ -461,10 +430,7 @@ export class RedisClient {
     zrem = async (key: string, values: JsonType[]): Promise<undefined> => {
         try {
             this.verifyKey(key)
-            const verifiedValues = this.verifyParameter(
-                values,
-                z.string().array(),
-            )
+            const verifiedValues = z.string().array().parse(values)
             await this.Redis.zrem(key, verifiedValues)
             return
         } catch (e: unknown) {
@@ -549,22 +515,17 @@ export class RedisClient {
     ): Promise<JsonType> => {
         try {
             this.verifyKey(key)
-            const verifiedValues = this.verifyParameter(
-                values,
-                z.object({
+            const verifiedValues = z
+                .object({
                     min: z.number(),
                     max: z.number(),
-                }),
-            )
-            const verifiedOpts = this.verifyParameter(
-                opts,
-                this.ZodZRangeCommandOptions,
-            )
-            // if undefined, will it replaced by default, so never undefined
+                })
+                .parse(values)
+            const verifiedOpts = this.ZodZRangeCommandOptions.parse(opts)
             const result: JsonType[] = await this.Redis.zrange(
                 key,
-                verifiedValues.min!,
-                verifiedValues.max!,
+                verifiedValues.min,
+                verifiedValues.max,
                 verifiedOpts,
             )
             return result !== null ? result : undefined

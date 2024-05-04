@@ -23,7 +23,7 @@ export class Extender extends ExtenderBase {
         // Register your extend functions
         this.addMethod({
             objectExtract: {
-                kind: "objectNokey",
+                kind: 'objectNokey',
                 function: this.objectExtract,
             },
             arrayReplace: {
@@ -55,14 +55,13 @@ export class Extender extends ExtenderBase {
     arrayReplace = async (input: JsonObj): Promise<JsonType> => {
         try {
             // console.debug(`DEBUG: opts=${JSON.stringify(opts)}`)
-            const verifiedOpts = this.verifyParameter(
-                input,
-                z.object({
+            const verifiedOpts = z
+                .object({
                     array: z.string().array(),
                     regex: z.string(),
                     replace: z.string(),
-                }),
-            )
+                })
+                .parse(input)
             const result = verifiedOpts.array.map((value) => {
                 const replaced = value.replace(
                     new RegExp(verifiedOpts.regex, 'g'),
