@@ -48,8 +48,8 @@ By default, you cau use these `functionName` below.
 | jsonMget | [upstash JSON.MGET wrapper](https://upstash.com/docs/oss/sdks/py/redis/commands/json/mget). get values to json data from DB by Multikeys. if not json, skip value. |
 | jsonSet | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. |
 | jsonDel | [upstash JSON.DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/del). del value to json data from DB. |
-| scan | [upstash SCAN wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/scan). Get keys with key-pattern matched by grob style. If no keys matched, throw Error. |
-| scanRegex | Get keys with key-pattern matched by regex pattern match. If no keys matched, throw Error. |
+| scanAll | Get keys with key-pattern matched by grob style while cursor become 0. If no keys matched, throw Error. |
+| scanRegex | Get keys with key-pattern matched by regex pattern match while cursor become 0. If no keys matched, throw Error. |
 | typeGrep | Pick keys by type from key array. |
 | zadd | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add multi items. |
 | zaddSingle | [upstash ZADD wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/zset/zadd), add single item. |

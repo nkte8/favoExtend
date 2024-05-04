@@ -4,6 +4,8 @@ import { describe, it, expect } from 'vitest'
 import worker from '../src/index'
 import { Redis } from '@upstash/redis/cloudflare'
 
+const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms))
+
 const RedisClient = new Redis({
     url: env.UPSTASH_REDIS_REST_URL,
     token: env.UPSTASH_REDIS_REST_TOKEN,
@@ -134,6 +136,7 @@ describe('API test', () => {
             }),
         })
         const apiResult = await response.json()
+        await sleep(10)
         // get value. default is 0
         const user = await RedisClient.get('user/testuser/testid').then(
             (value) => (value === null ? 0 : value),

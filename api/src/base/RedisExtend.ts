@@ -37,17 +37,60 @@ export class RedisExtend extends RedisClient {
         }
     }
     /**
+     * scanAll: Scan pattern while cursor become 0, return key list
+     * @param pattern Glob-style pattern.
+     */
+    scanAll = async (pattern: string): Promise<string[]> => {
+        try {
+            this.verifyKey(pattern)
+            // search pattern
+            let cursor: number = 0
+            let resultKeys: string[] = []
+            do {
+                const [ncursor, keys] = await this.Redis.scan(cursor, {
+                    match: pattern,
+                })
+                resultKeys = resultKeys.concat(keys)
+                cursor = ncursor
+            } while (cursor !== 0)
+            // if no keys found throw error
+            if (resultKeys.length <= 0) {
+                throw new ExtendError({
+                    message: `No found keyRef: ${pattern}`,
+                    status: 500,
+                    name: 'KeyScan Failed',
+                })
+            }
+            return resultKeys
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at scan')
+        }
+    }
+    /**
      * scanRegex: Scan pattern, return key list
      * @param regex regex pattern.
      */
     scanRegex = async (regex: string): Promise<string[]> => {
         try {
+            // before scan, replace regex to wildcard by best effort
+            const wildcardPattern = regex
+                .replace(RegExp(/(\^|\(\?<=)(.*)/), '$2')
+                .replace(RegExp(/\)/), '')
+                .replace(RegExp(/[.{$([\\].*/), '*')
+            console.debug(`DEBUG wildcardPattern=${wildcardPattern}`)
             // search pattern
-            const [_, keys] = await this.Redis.scan(0, {
-                match: '*',
-            })
+            const resultKeys = await this.scanAll(wildcardPattern)
             // console.debug(`DEBUG: regex=${regex}`)
-            const selectedKeys = keys.reduce<string[]>((nval, key) => {
+            const selectedKeys = resultKeys.reduce<string[]>((nval, key) => {
                 if (RegExp(regex, 'g').test(key)) {
                     nval.push(key)
                 }
@@ -134,7 +177,7 @@ export class RedisExtend extends RedisClient {
             const result = await Promise.all(
                 keys.map(async (key) => {
                     const count = await this.incrSum(key)
-                    if (typeof count === "undefined") {
+                    if (typeof count === 'undefined') {
                         return 0
                     }
                     return count

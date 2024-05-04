@@ -394,39 +394,6 @@ export class RedisClient {
         }
     }
     /**
-     * scan: Scan pattern, return key list
-     * @param pattern Glob-style pattern.
-     */
-    scan = async (pattern: string): Promise<string[]> => {
-        try {
-            this.verifyKey(pattern)
-            // search pattern
-            const [_, keys] = await this.Redis.scan(0, {
-                match: pattern,
-            })
-            // if no keys found throw error
-            if (keys.length <= 0) {
-                throw new ExtendError({
-                    message: `No found keyRef: ${pattern}`,
-                    status: 500,
-                    name: 'KeyScan Failed',
-                })
-            }
-            return keys
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error at scan')
-        }
-    }
-    /**
      * zadd: Add sortedSets
      * @param key key
      * @param values sortedSet list

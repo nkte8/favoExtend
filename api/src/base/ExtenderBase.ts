@@ -574,9 +574,9 @@ export class ExtenderBase extends RedisExtend {
             kind: 'object',
             function: this.jsonSet,
         },
-        scan: {
+        scanAll: {
             kind: 'keyOnly',
-            function: this.scan,
+            function: this.scanAll,
         },
         zadd: {
             kind: 'array',

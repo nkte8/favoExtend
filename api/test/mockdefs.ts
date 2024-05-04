@@ -10,7 +10,7 @@ export const TestGetTokens = new Definition(
     [
         {
             keyRef: 'token/*',
-            functionName: 'scan',
+            functionName: 'scanAll',
             output: z.string().array(),
         },
         {
@@ -38,7 +38,7 @@ export const TestGetUsers = new Definition(
     [
         {
             keyRef: 'user/*',
-            functionName: 'scan',
+            functionName: 'scanAll',
             output: z.string().array(),
         },
         {
