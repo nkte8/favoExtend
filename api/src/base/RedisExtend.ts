@@ -1,6 +1,11 @@
 import { RedisClient } from './RedisClient'
 import { ExtendError } from './ExtendError'
-import { JsonType, JsonObj, JsonLiteral } from './availableTypes'
+import {
+    JsonType,
+    JsonObj,
+    JsonLiteral,
+    JsonTypeNullAble,
+} from './availableTypes'
 import { z } from 'zod'
 
 export class RedisExtend extends RedisClient {
@@ -34,6 +39,54 @@ export class RedisExtend extends RedisClient {
                 })
             }
             throw new Error('Unexpected Error at get')
+        }
+    }
+    /** jsonGet: Read db value of json data
+     * @param key DB key
+     * @param opts.path default '$', set get json path
+     */
+    jsonGetThrowError = async (
+        key: string,
+        opts?: JsonObj,
+    ): Promise<JsonType> => {
+        try {
+            this.verifyKey(key)
+            const verifiedOpts = z
+                .object({ path: z.string().default('$') })
+                .or(z.undefined())
+                .parse(opts)
+            const path: string =
+                typeof verifiedOpts !== 'undefined' ? verifiedOpts.path : '$'
+            const result: JsonTypeNullAble = await this.Redis.json.get(
+                key,
+                path,
+            )
+            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
+            let parsedResult = this.replaceNullToUndefined(result)
+            // console.debug(`DEBUG: parsedResult=${JSON.stringify(parsedResult)}`)
+            // If result length = 1, return as single
+            if (Array.isArray(parsedResult) && parsedResult.length === 1) {
+                parsedResult = parsedResult[0]
+            }
+            if (typeof parsedResult === "undefined") {
+                throw new ExtendError({
+                    message: `Data not found error`,
+                    status: 404,
+                    name: 'Not Found',
+                })
+            }
+            return parsedResult
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at jsonGet')
         }
     }
     /**

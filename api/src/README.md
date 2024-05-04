@@ -6,25 +6,25 @@ This is example API, GET `<your.worker.origin>/favo?id=<string>` will return `{ 
 
 ```ts
 export const GetFavo = new Definition(
-    // Here is API Definication
+  // Here is API Definication
+  {
+    path: '/favo',
+    method: 'GET',
+    query: z.object({
+      id: z.string().regex(idRule),
+    }),
+    output: { count: '${#0}' },
+  },
+  // end of API Definication
+  // Here is Redis DB Actions
+  [
     {
-        path: '/favo',
-        method: 'GET',
-        query: z.object({
-            id: z.string().regex(idRule),
-        }),
-        output: { count: '{#0}' },
+      keyRef: 'favo/${#.id}',
+      functionName: 'getUndefinedAble',
+      output: z.number().default(0),
     },
-    // end of API Definication
-    // Here is Redis DB Actions
-    [
-        {
-            keyRef: 'favo/{id}',
-            functionName: 'getUndefinedAble',
-            output: z.number().default(0),
-        },
-    ],
-    // end of Redis DB Actions
+  ],
+  // end of Redis DB Actions
 )
 ```
 
@@ -44,8 +44,9 @@ By default, you cau use these `functionName` below.
 | get | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, return undefined. |
 | getThrowError | [upstash GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/get). get DB value as string. If value not found, throw Error. |
 | set | [upstash SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/set). set string value to DB. |
-| jsonGet | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. if not json, skip value. |
-| jsonMget | [upstash JSON.MGET wrapper](https://upstash.com/docs/oss/sdks/py/redis/commands/json/mget). get values to json data from DB by Multikeys. if not json, skip value. |
+| jsonGet | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. if not found, return undefined. |
+| jsonGetThrowError | [upstash JSON.GET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/get). get value in json data from DB. if not found, throw Error. |
+| jsonMget | [upstash JSON.MGET wrapper](https://upstash.com/docs/oss/sdks/py/redis/commands/json/mget). get values to json data from DB by Multikeys. if not found, return undefined. |
 | jsonSet | [upstash JSON.SET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/set). set value to json data from DB. |
 | jsonSetSafe | Set value to json data from DB. this function not replace json path like jsonSet, only refresh same key or append key. |
 | jsonDel | [upstash JSON.DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/json/del). del value to json data from DB. |
@@ -82,23 +83,18 @@ import { Extender } from '@/base/Extender'
 import * as defs from '@/your_apidefs'
 
 export default {
-    async fetch(request: Request, env: Env): Promise<Response> {
-        const Client = new Extender(
-            {
-                UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
-                UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
-            },
-            [
-                defs.YourAPIDef1,
-                defs.YourAPIDef2,
-                defs.YourAPIDef3,
-                defs.YourAPIDef4,
-            ],
-        )
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const Client = new Extender(
+      {
+        UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
+        UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
+      },
+      [defs.YourAPIDef1, defs.YourAPIDef2, defs.YourAPIDef3, defs.YourAPIDef4],
+    )
 
-        const response: Response = await Client.createResponse(request, header)
-        return response
-    },
+    const response: Response = await Client.createResponse(request, header)
+    return response
+  },
 }
 ```
 

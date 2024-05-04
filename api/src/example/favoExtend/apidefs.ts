@@ -149,7 +149,7 @@ export const GetUser = new Definition(
     [
         {
             keyRef: 'user/${#.handle}',
-            functionName: 'jsonGet',
+            functionName: 'jsonGetThrowError',
             output: z.object({
                 name: z.string(),
                 passwd: z.string(),

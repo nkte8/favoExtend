@@ -566,6 +566,10 @@ export class ExtenderBase extends RedisExtend {
             kind: 'keyOnly',
             function: this.jsonGet,
         },
+        jsonGetThrowError: {
+            kind: 'keyOnly',
+            function: this.jsonGetThrowError,
+        },
         jsonMget: {
             kind: 'multiKey',
             function: this.jsonMget,

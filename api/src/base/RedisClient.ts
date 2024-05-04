@@ -90,10 +90,10 @@ export class RedisClient {
             throw new Error('Unexpected Error at incr')
         }
     }
-    /** mget: Read DB. if value not found, throw error.
+    /** mget: Read DB. if value not found, return undefined.
      * @param key DB keys
      */
-    mget = async (key: string[]): Promise<string[]> => {
+    mget = async (key: string[]): Promise<string[] | undefined> => {
         try {
             const value: (string | null)[] = await this.Redis.mget(key)
             const result = value.reduce<string[]>((nval, value) => {
@@ -103,11 +103,7 @@ export class RedisClient {
                 return nval
             }, [])
             if (result.length === 0) {
-                throw new ExtendError({
-                    message: `Data not found.`,
-                    status: 404,
-                    name: 'Not Found',
-                })
+                return undefined
             }
             return result
         } catch (e: unknown) {
@@ -124,7 +120,7 @@ export class RedisClient {
     /** get: Read DB. if value not found, return undefined
      * @param key DB key
      */
-    get = async (key: string): Promise<JsonType> => {
+    get = async (key: string): Promise<string | undefined> => {
         try {
             this.verifyKey(key)
             const value: string | null = await this.Redis.get(key)
@@ -206,21 +202,16 @@ export class RedisClient {
                 key,
                 path,
             )
-            if (result === null || typeof result === 'undefined') {
-                throw new ExtendError({
-                    message: `Data not found error`,
-                    status: 404,
-                    name: 'Not Found',
-                })
-            }
-            const parsedResult = this.replaceNullToUndefined(result)
+            let parsedResult = this.replaceNullToUndefined(result)
             // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
             // console.debug(`DEBUG: parsedResult=${JSON.stringify(parsedResult)}`)
 
             // If result length = 1, return as single
             if (Array.isArray(parsedResult) && parsedResult.length === 1) {
-                const value = parsedResult[0]
-                return value !== null ? value : undefined
+                parsedResult = parsedResult[0]
+            }
+            if (typeof parsedResult === "undefined") {
+                return undefined
             }
             return parsedResult
         } catch (e: unknown) {
@@ -252,29 +243,24 @@ export class RedisClient {
                 keys,
                 path,
             )
-            if (mgetResult === null || typeof mgetResult === 'undefined') {
-                throw new ExtendError({
-                    message: `Data not found error`,
-                    status: 404,
-                    name: 'Not Found',
-                })
-            }
             const parsedResult = this.replaceNullToUndefined(mgetResult)
             // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
             // console.debug(`DEBUG: parsedResult=${JSON.stringify(parsedResult)}`)
 
             if (!Array.isArray(parsedResult)) {
+                if (typeof parsedResult === "undefined") {
+                    return undefined
+                }
                 // mgetResult must be Array
                 throw new Error('Unexpected Error')
             }
             // If result length = 1, return as single
             const result: JsonType[] = parsedResult.map((json) => {
                 if (Array.isArray(json) && json.length === 1) {
-                    return json[0]
+                    json = json[0]
                 }
                 return json
             })
-            // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
             return result
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
