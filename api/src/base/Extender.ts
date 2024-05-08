@@ -46,6 +46,10 @@ export class Extender extends ExtenderBase {
                 kind: 'arrayNokey',
                 function: this.numAvg,
             },
+            numCompare: {
+                kind: 'arrayNokey',
+                function: this.numCompare,
+            },
         })
     }
     /**
@@ -265,6 +269,90 @@ export class Extender extends ExtenderBase {
                 })
             }
             return result / lenght
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at numSum')
+        }
+    }
+
+    /**
+     * numCompare: Compare values with rule selected
+     * @param values array of number, 1sh one is compared by other numbers
+     * @param opts.operator select from eq ne ge gt le lt
+     * @returns evaluate by operator
+     */
+    numCompare = async (
+        values: JsonType[],
+        opts?: JsonObj,
+    ): Promise<JsonType> => {
+        try {
+            const tasksSafeParse = Promise.all(
+                values.map((value: unknown) => {
+                    const safeParsed = z.number().safeParse(value)
+                    if (safeParsed.success) {
+                        return safeParsed.data
+                    } else {
+                        return undefined
+                    }
+                }),
+            )
+            const verifiedOpts = z
+                .object({
+                    operator: z
+                        .literal('eq')
+                        .or(z.literal('ne'))
+                        .or(z.literal('ge'))
+                        .or(z.literal('gt'))
+                        .or(z.literal('le'))
+                        .or(z.literal('lt')),
+                })
+                .default({ operator: 'eq' })
+                .parse(opts)
+            const taskResult = await tasksSafeParse
+            const compareValue = taskResult.shift()
+            if (taskResult.length >= 2 || compareValue === undefined) {
+                return false
+            }
+            const result = taskResult.reduce<boolean>((a, x) => {
+                if (a || x === undefined) {
+                    // when it true or x invalid, return true
+                    return a
+                }
+                switch (verifiedOpts.operator) {
+                    case 'eq': {
+                        a = compareValue === x
+                        break
+                    }
+                    case 'ne': {
+                        a = compareValue !== x
+                        break
+                    }
+                    case 'ge': {
+                        a = compareValue >= x
+                        break
+                    }
+                    case 'gt': {
+                        a = compareValue > x
+                        break
+                    }
+                    case 'le': {
+                        a = compareValue <= x
+                        break
+                    }
+                    case 'lt': {
+                        a = compareValue < x
+                        break
+                    }
+                }
+                return a
+            }, false)
+            return result
         } catch (e: unknown) {
             if (e instanceof Error) {
                 throw new ExtendError({

@@ -1,5 +1,13 @@
 # favoExtend
 
+## 1.0.5
+
+### Patch Changes
+
+- numCompare関数を追加しました
+  - opts.operatorに比較演算識別子を入力することで、最初の値と後に続くすべての値を比較する関数です。
+  - 入力の配列が2以下の場合は必ずfalseを返します。
+
 ## 1.0.4
 
 ### Patch Changes

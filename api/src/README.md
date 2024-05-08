@@ -71,6 +71,7 @@ Also you can use methods not control redis.
 | defineRef | Pass through the ref value. you can re-define output. |
 | numSum | Get sum from key list. |
 | numAvg | Get average from key list. |
+| numCompare | Compare first value to other values by opt.operator. default compare by equarity. |
 
 ## How to use API
 
