@@ -24,6 +24,7 @@ const MockClient = new FavoExtend(env, [
     defs.TestValuesToHalf,
     defs.TestJsonSafeadd,
     defs.TestJsonDel,
+    defs.TestNumCompare,
 ])
 
 describe('Mock test', () => {
@@ -226,5 +227,12 @@ describe('Mock test', () => {
         expect(apiResult).toMatchObject({
             result: 'OK',
         })
+    })
+    it('[Positive] numCompare function test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'GET',
+            requestUrl: new URL('https://example.com/compare?value=20'),
+        })
+        expect(apiResult).toEqual(true)
     })
 })

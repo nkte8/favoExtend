@@ -343,3 +343,38 @@ export const TestJsonDel = new Definition(
         },
     ],
 )
+
+export const TestNumCompare = new Definition(
+    {
+        path: '/compare',
+        method: 'GET',
+        query: z.object({
+            value: z.string(),
+        }),
+        output: '${#2}',
+    },
+    [
+        {
+            functionName: 'defineRef',
+            input: {
+                border: 10,
+            },
+            output: z.object({
+                border: z.number(),
+            }),
+        },
+        {
+            functionName: 'parseNum',
+            input: '${#.value}',
+            output: z.number(),
+        },
+        {
+            functionName: 'numCompare',
+            input: ['${#0.border}', '${#1}'],
+            opts: {
+                operator: 'lt',
+            },
+            output: z.boolean(),
+        },
+    ],
+)

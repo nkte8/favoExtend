@@ -1,5 +1,12 @@
 # favoExtend
 
+## 1.0.6
+
+### Patch Changes
+
+- parseNum,parseBool関数を追加
+  - URLクエリ等でstringで受け取った値を、内部的に数値やBool値で扱えるよう、これを変換する処理を追加しました。
+
 ## 1.0.5
 
 ### Patch Changes
