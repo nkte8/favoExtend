@@ -16,7 +16,7 @@ export class RedisClient {
         UPSTASH_REDIS_REST_URL: string
         UPSTASH_REDIS_REST_TOKEN: string
     }) {
-        this.Redis = Redis.fromEnv(env)
+        this.Redis = Redis.fromEnv({ ...env, UPSTASH_DISABLE_TELEMETRY: '1' })
     }
 
     protected replaceNullToUndefined(
@@ -210,7 +210,7 @@ export class RedisClient {
             if (Array.isArray(parsedResult) && parsedResult.length === 1) {
                 parsedResult = parsedResult[0]
             }
-            if (typeof parsedResult === "undefined") {
+            if (typeof parsedResult === 'undefined') {
                 return undefined
             }
             return parsedResult
@@ -248,7 +248,7 @@ export class RedisClient {
             // console.debug(`DEBUG: parsedResult=${JSON.stringify(parsedResult)}`)
 
             if (!Array.isArray(parsedResult)) {
-                if (typeof parsedResult === "undefined") {
+                if (typeof parsedResult === 'undefined') {
                     return undefined
                 }
                 // mgetResult must be Array
