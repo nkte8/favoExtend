@@ -102,9 +102,9 @@ export class ExtenderBase extends RedisExtend {
         // process by order
         for (let index = 0; index < Definicator.dbDefs.length; index++) {
             const dbDef = Definicator.dbDefs[index]
-            console.info(
-                `INFO: Start Process #${index}, function: ${dbDef.functionName}`,
-            )
+            // console.info(
+            //     `INFO: Start Process #${index}, function: ${dbDef.functionName}`,
+            // )
             // console.debug(`DEBUG: requestInput=${JSON.stringify(requestInput)}`)
             const dbInput = await Promise.all([
                 Definicator.rediskeyRefToKey({
@@ -122,6 +122,10 @@ export class ExtenderBase extends RedisExtend {
                 Definicator.redisMultiKeyRefToMultiKeys({
                     apiInput: requestInput,
                     multiKeysRef: dbDef.multiKeysRef,
+                }),
+                Definicator.ifRefToBoolean({
+                    inputData: requestInput,
+                    ifRef: dbDef.ifRef,
                 }),
             ])
             // console.debug(`DEBUG: dbInput=${JSON.stringify(dbInput)}`)
@@ -146,6 +150,7 @@ export class ExtenderBase extends RedisExtend {
             const dbFunctionInput = dbInput[1]
             const dbFunctionOpts = dbInput[2]
             const dbFunctionMultiKeysRef = dbInput[3]
+            const dbFunctionIfRef = dbInput[4]
             // console.debug(
             //     `DEBUG: keyRef={${dbFunctionKeyRef}}, input={${JSON.stringify(
             //         dbFunctionInput,
@@ -162,6 +167,11 @@ export class ExtenderBase extends RedisExtend {
                     name: 'Method Not Found',
                     status: 500,
                 })
+            }
+            // if ifRef value false, Ignore
+            if (dbFunctionIfRef === false) {
+                definicatorRunResult.push(new Ignored())
+                continue
             }
             if (
                 !(
@@ -421,7 +431,9 @@ export class ExtenderBase extends RedisExtend {
             definicatorRunResult.push(dbMethodResult)
             // Add requestInput to before API result
             requestInput[`#${index}`] = dbMethodResult
-            console.info(`INFO: Finished Process #${index}`)
+            console.info(
+                `INFO: Finished Process #${index} function: ${dbDef.functionName}`,
+            )
         }
         // Ignored function replace undefined
         const replacedResults = definicatorRunResult.map((value) => {

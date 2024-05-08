@@ -58,6 +58,10 @@ export class Extender extends ExtenderBase {
                 kind: 'anyNokey',
                 function: this.parseBool,
             },
+            isAllSame: {
+                kind: 'arrayNokey',
+                function: this.isAllSame,
+            },
         })
     }
     /**
@@ -372,7 +376,7 @@ export class Extender extends ExtenderBase {
                 .parse(opts)
             const taskResult = await tasksSafeParse
             const compareValue = taskResult.shift()
-            if (taskResult.length >= 2 || compareValue === undefined) {
+            if (taskResult.length < 1 || compareValue === undefined) {
                 return false
             }
             const result = taskResult.reduce<boolean>((a, x) => {
@@ -418,6 +422,36 @@ export class Extender extends ExtenderBase {
                 })
             }
             throw new Error('Unexpected Error at numSum')
+        }
+    }
+    /**
+     * isAllSame: compare array all
+     * @param input anyvalue
+     * @returns if the all same, return true. when some item is not match return false
+     */
+    isAllSame = async (input: JsonType[]): Promise<boolean> => {
+        try {
+            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
+            const compareValue = input.shift()
+            if (input.length < 1 || compareValue === undefined) {
+                return false
+            }
+            const result = input.reduce<boolean>((a, x) => {
+                if (compareValue !== x) {
+                    a = false
+                }
+                return a
+            }, true)
+            return result
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at defineRef')
         }
     }
 }

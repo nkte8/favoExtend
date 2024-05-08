@@ -1,9 +1,7 @@
 import { Extender } from '@/base/Extender'
 import * as defs from './apidefs'
-import { JsonObj } from '@/base/availableTypes'
 import { ExtendError } from '@/base/ExtendError'
 import { Definition } from '@/base/Definition'
-import { z } from 'zod'
 
 export class FavoExtend extends Extender {
     constructor(
@@ -27,52 +25,11 @@ export class FavoExtend extends Extender {
 
         // Register your extend functions
         this.addMethod({
-            auth: {
-                kind: 'objectNokey',
-                function: this.auth,
-            },
             generateToken: {
                 kind: 'keyOnly',
                 function: this.generateToken,
             },
         })
-    }
-
-    /**
-     * Extend example: Auth function, compare two value
-     * @param input.verifySrc compare value A
-     * @param input.verifyDist compare value B
-     */
-    auth = async (input: JsonObj): Promise<undefined> => {
-        try {
-            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
-            const verifiedInput = z
-                .object({
-                    verifySrc: z.string(),
-                    verifyDist: z.string(),
-                })
-                .parse(input)
-            const decodedVerifyPw = verifiedInput['verifySrc']
-            const decodedSavedPw = verifiedInput['verifyDist']
-            if (decodedSavedPw !== decodedVerifyPw) {
-                throw new ExtendError({
-                    message: 'Authentication Failed',
-                    status: 400,
-                    name: 'Authentication Failed',
-                })
-            }
-        } catch (e: unknown) {
-            if (e instanceof ExtendError) {
-                throw e
-            } else if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
-                })
-            }
-            throw new Error('Unexpected Error')
-        }
     }
 
     /**

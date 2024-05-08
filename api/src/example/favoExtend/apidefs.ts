@@ -14,7 +14,6 @@ const handleRule = /^[a-zA-Z][a-zA-Z0-9]{4,}$/
  */
 const idRule = /^[a-zA-Z0-9_-]{5,}$/
 
-
 /**
  * This is definition of...
  *  Request method -> GET
@@ -43,21 +42,6 @@ export const GetFavo = new Definition(
     ],
 )
 
-/**
- * This is definition of...
- *  Request method -> POST
- *   Request -> https://example.com/favo
- *   Request body -> { id: <string> } or { id: <string>, handle: <string> } (handle is optional)
- *   Will Response -> { count: <number | redis action #1 result> }
- *  Redis action(#0) -> Incr
- *   Incr definition -> ...
- *    key: user/<handle string>/<id string>,
- *    output: <number = #0>
- *  Redis action(#1) -> Incr
- *   Incr definition -> ...
- *    key: user/<handle string>/<id string>,
- *    output: <number = #1>
- */
 export const PostFavo = new Definition(
     {
         path: '/favo',
@@ -83,17 +67,6 @@ export const PostFavo = new Definition(
     ],
 )
 
-/**
- * This is definition of...
- *  Request method -> POST
- *   Request -> https://example.com/user
- *   Request body -> { handle: <string>, name: <string>, passwd: <string> }
- *   Will Response -> no response
- *  Redis action(#0) -> Set
- *   Set definition -> ...
- *    key: user/<handle string>
- *    output: <number = #0>
- */
 export const PostUserEdit = new Definition(
     {
         path: '/user',
@@ -104,8 +77,8 @@ export const PostUserEdit = new Definition(
             passwd: z.string(),
         }),
         output: {
-            result: "ok"
-        }
+            result: 'ok',
+        },
     },
     [
         {
@@ -119,21 +92,6 @@ export const PostUserEdit = new Definition(
     ],
 )
 
-/**
- * This is definition of...
- *  Request method -> GET
- *   Request -> https://example.com/user?handle=<string>
- *   Request body -> no body
- *   Will Response -> { name: <string, #0.name>, count: <number, #1> }
- *  Redis action(#0) -> Get
- *   Get definition -> ...
- *    key: user/<handle string>
- *    output: <object = #0, #0={name: <string>, passwd: <string>}>
- *  Redis action(#1) -> incrSum
- *   incrSum definition -> ...
- *    key: user/<handle string>/*
- *    output: <number = #1, if no data, return 0 >
- */
 export const GetUser = new Definition(
     {
         path: '/user',
@@ -163,28 +121,6 @@ export const GetUser = new Definition(
     ],
 )
 
-/**
- * Extend example: This is definition of...
- *  Request method -> POST
- *   Request -> https://example.com/login
- *   Request body -> { handle: <string>, pencoded: <string> }
- *   Will Response -> { token: <string = #2> }
- *  Redis action(#0) -> jsonGet
- *   jsonGet definition -> ...
- *    key: user/<handle string>
- *    opts: { path: "$.passwd" } <-- get (root).passwd value from DB(Json)
- *    output: <number = #0>
- *   auth definition -> ... <---- Extend function(your define)
- *    key: undefined
- *    input: {
- *       verifySrc: "{pencoded}"  <-- get pencoded from Request body
- *       verifyDist: "{#0}" <--- get value from Redis action(#0) output
- *      }
- *    output: undefined
- *   generateToken definition -> ... <---- Extend function(your define)
- *    key: token/{handle}
- *    output: <string = #2>
- */
 export const Login = new Definition(
     {
         path: '/login',
@@ -207,46 +143,19 @@ export const Login = new Definition(
             },
         },
         {
-            functionName: 'auth',
-            input: {
-                verifySrc: '${#.passwd}',
-                verifyDist: '${#0}',
-            },
+            functionName: 'isAllSame',
+            input: ['${#.passwd}', '${#0}'],
+            output: z.boolean()
         },
         {
             keyRef: 'token/${#.handle}',
             functionName: 'generateToken',
             output: z.string(),
+            ifRef: '${#1}',
         },
     ],
 )
 
-/**
- * Extend example: This is definition of...
- *  Request method -> POST
- *   Request -> https://example.com/favo
- *   Request body -> {
- *     id: <string>,
- *     handle: <string or undefined>,
- *     token: <string or undefined>
- *   }
- *   Will Response -> { count: <number | redis action #1 result> }
- *  auth definition -> ... <---- Extend function(your define)
- *   key: undefined
- *   input: {
- *      verifySrc: "{pencoded}"  <-- get pencoded from Request body
- *      verifyDist: "{#0}" <--- get value from Redis action(#0) output
- *     }
- *   output: undefined
- *  Redis action(#0) -> Incr
- *   Incr definition -> ...
- *    key: user/<handle string>/<id string>,
- *    output: <number = #0>
- *  Redis action(#1) -> Incr
- *   Incr definition -> ...
- *    key: user/<handle string>/<id string>,
- *    output: <number = #1>
- */
 export const PostFavoWithAuth = new Definition(
     {
         path: '/favo',
@@ -269,19 +178,16 @@ export const PostFavoWithAuth = new Definition(
             ignoreFail: true,
         },
         {
-            functionName: 'auth',
-            input: {
-                verifySrc: '${#.token}',
-                verifyDist: '${#0}',
-            },
-            ignoreFail: true,
+            functionName: 'isAllSame',
+            input: ['${#.token}', '${#0}'],
+            output: z.boolean(),
         },
         {
             keyRef: 'user/${#.handle}/${#.id}',
             functionName: 'incr',
             output: z.number(),
             ignoreFail: true,
-            dependFunc: [0, 1],
+            ifRef: '${#1}',
         },
         {
             keyRef: 'favo/${#.id}',

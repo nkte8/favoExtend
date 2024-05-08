@@ -1,5 +1,15 @@
 # favoExtend
 
+## 1.0.7
+
+### Patch Changes
+
+- ifRefプロパティを追加
+  - Booleanを示すRefMarkerを判定し、処理をスキップ可能にするdbDefs向けプロパティ`ifRef`を追加しました。
+  - 処理#1が実行された結果がBooleanの場合に、`ifRef: "${#1}"`などの設定をすると#1がFalseを返却した場合にその処理をスキップします。
+- isAllSame関数・テストを追加
+  - Arrayの値がすべて一致している場合にTrue、そうではない場合にFalseを返す関数`isAllSame`を追加しました
+
 ## 1.0.6
 
 ### Patch Changes

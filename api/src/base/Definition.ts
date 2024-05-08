@@ -26,6 +26,7 @@ type RedisDef = {
     ignoreFail: boolean
     ignoreOutput: boolean
     dependFunc?: number[]
+    ifRef?: string
     opts?: JsonObj
 }
 
@@ -213,6 +214,34 @@ export class Definition {
             // console.debug(`DEBUG: result=${JSON.stringify(result)}`)
         })
         return result
+    }
+
+    async ifRefToBoolean({
+        inputData,
+        ifRef,
+    }: {
+        inputData: JsonType
+        ifRef?: string
+    }): Promise<boolean> {
+        // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
+        if (typeof ifRef === 'undefined') {
+            return true
+        }
+        const inputAbleData = await this.replaceRelationTypeToInputAbleData({
+            relationData: ifRef,
+            inputData: inputData,
+        })
+        // console.debug(`DEBUG: inputAbleData=${JSON.stringify(inputAbleData)}`)
+
+        const result = z.boolean().safeParse(inputAbleData)
+        if (result.success !== true) {
+            throw new ExtendError({
+                message: `${ifRef} seems not include value parse-able by boolean.`,
+                status: 500,
+                name: 'Invalid Ref',
+            })
+        }
+        return result.data
     }
 
     apiInputToRedisInput({
