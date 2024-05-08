@@ -69,6 +69,8 @@ Also you can use methods not control redis.
 | arrayReplace | Replace array item and return replaced array. |
 | nowUnixTime | Get UTC unix time, with opts.tdiff, can set time difference(hour) |
 | defineRef | Pass through the ref value. you can re-define output. |
+| parseNum | Parse string or any value to number. if cannot, return undefined |
+| parseBool | Parse string or any value to boolean. if cannot, return undefined |
 | numSum | Get sum from key list. |
 | numAvg | Get average from key list. |
 | numCompare | Compare first value to other values by opt.operator. default compare by equarity. |

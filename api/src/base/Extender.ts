@@ -50,6 +50,14 @@ export class Extender extends ExtenderBase {
                 kind: 'arrayNokey',
                 function: this.numCompare,
             },
+            parseNum: {
+                kind: 'anyNokey',
+                function: this.parseNum,
+            },
+            parseBool: {
+                kind: 'anyNokey',
+                function: this.parseBool,
+            },
         })
     }
     /**
@@ -201,6 +209,54 @@ export class Extender extends ExtenderBase {
         }
     }
     /**
+     * parseNum: parse some value to number
+     * @param input anyvalue
+     * @returns if parse success, return value. when not, return undefined
+     */
+    parseNum = async (input: JsonType): Promise<number | undefined> => {
+        try {
+            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
+            const parseResult = z.coerce.number().safeParse(input)
+            if (!parseResult.success) {
+                return undefined
+            }
+            return parseResult.data
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at defineRef')
+        }
+    }
+    /**
+     * parseBool: parse some value to boolean
+     * @param input anyvalue
+     * @returns if parse success, return value. when not, return undefined
+     */
+    parseBool = async (input: JsonType): Promise<boolean | undefined> => {
+        try {
+            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
+            const parseResult = z.coerce.boolean().safeParse(input)
+            if (!parseResult.success) {
+                return undefined
+            }
+            return parseResult.data
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at defineRef')
+        }
+    }
+    /**
      * numberSum: get sum. string data parse to number, if cannot, skip
      * @param values array of number
      * @returns pass through
@@ -290,7 +346,7 @@ export class Extender extends ExtenderBase {
     numCompare = async (
         values: JsonType[],
         opts?: JsonObj,
-    ): Promise<JsonType> => {
+    ): Promise<boolean> => {
         try {
             const tasksSafeParse = Promise.all(
                 values.map((value: unknown) => {
