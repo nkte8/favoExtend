@@ -8,6 +8,7 @@ type RelationType =
     | string
     | number
     | boolean
+    | undefined
     | RelationType[]
 
 type ApiDef = {

@@ -12,7 +12,7 @@ export default defineWorkersConfig({
             '@': path.resolve(__dirname, './src'),
         },
         include: [
-            'test/example/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
+            'test/example/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
             'test/base/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}',
         ],
     },

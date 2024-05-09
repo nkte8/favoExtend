@@ -1,7 +1,7 @@
 // test/index.spec.ts
 import { env, SELF } from 'cloudflare:test'
 import { describe, it, expect } from 'vitest'
-import worker from '../../src/index'
+import worker from '@/index'
 import { Redis } from '@upstash/redis/cloudflare'
 
 const sleep = (ms: number) => new Promise((res) => setTimeout(res, ms))
