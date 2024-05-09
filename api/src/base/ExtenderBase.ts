@@ -106,6 +106,7 @@ export class ExtenderBase extends RedisExtend {
             //     `INFO: Start Process #${index}, function: ${dbDef.functionName}`,
             // )
             // console.debug(`DEBUG: requestInput=${JSON.stringify(requestInput)}`)
+            // console.debug(`DEBUG: dbDef.opts=${JSON.stringify(dbDef.opts)}`)
             const dbInput = await Promise.all([
                 Definicator.rediskeyRefToKey({
                     apiInput: requestInput,

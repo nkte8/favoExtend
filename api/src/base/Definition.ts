@@ -190,6 +190,7 @@ export class Definition {
             return refValue
         }
         if (typeof relationData !== 'object') {
+            // console.debug(`DEBUG: relationData=${relationData}`)
             return relationData
         }
         if (Array.isArray(relationData)) {
@@ -271,8 +272,9 @@ export class Definition {
         if (typeof opts === 'undefined') {
             return
         }
+        // console.log(`DEBUG: opts=${JSON.stringify(opts)}`)
         const parseResult = await this.replaceRelationTypeToInputAbleData({
-            relationData: this.reduceNotStringFromOpt(opts),
+            relationData: opts,
             inputData: inputData,
         })
         // console.log(`DEBUG: parseResult=${JSON.stringify(parseResult)}`)

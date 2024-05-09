@@ -177,7 +177,7 @@ export const TestAddRankingAllUser = new Definition(
             functionName: 'arrayReplace',
             input: {
                 array: '${#0}',
-                regex: '.*',
+                regex: '^.*$',
                 replace: '$&/*',
             },
             output: z.string().array(),
@@ -375,6 +375,29 @@ export const TestNumCompare = new Definition(
                 operator: 'lt',
             },
             output: z.boolean(),
+        },
+    ],
+)
+
+export const TestThrowError = new Definition(
+    {
+        path: '/error',
+        method: 'GET',
+    },
+    [
+        {
+            functionName: 'defineRef',
+            input: false,
+            output: z.boolean(),
+        },
+        {
+            functionName: 'throwError',
+            input: '${#0}',
+            opts: {
+                name: 'UserError',
+                status: 400,
+                message: 'User Caused Error',
+            },
         },
     ],
 )

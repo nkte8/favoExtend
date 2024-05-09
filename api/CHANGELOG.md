@@ -1,5 +1,12 @@
 # favoExtend
 
+## 1.0.9
+
+### Patch Changes
+
+- throwError関数を追加
+  - booleanの値がfalseの際にoptsで定義したエラーをスローし、処理を停止する関数を追加しました。
+
 ## 1.0.8
 
 ### Patch Changes

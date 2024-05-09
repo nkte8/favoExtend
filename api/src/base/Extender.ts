@@ -1,7 +1,7 @@
 import { ExtenderBase } from './ExtenderBase'
 import { ExtendError } from './ExtendError'
 import { Definition } from './Definition'
-import { JsonType, JsonObj } from './availableTypes'
+import { JsonType, JsonObj, JsonLiteral } from './availableTypes'
 import { z } from 'zod'
 
 export class Extender extends ExtenderBase {
@@ -61,6 +61,10 @@ export class Extender extends ExtenderBase {
             isAllSame: {
                 kind: 'arrayNokey',
                 function: this.isAllSame,
+            },
+            throwError: {
+                kind: 'literalNokey',
+                function: this.throwError,
             },
         })
     }
@@ -127,7 +131,7 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at defineRef')
+            throw new Error('Unexpected Error at nowUnixTime')
         }
     }
     /**
@@ -213,6 +217,53 @@ export class Extender extends ExtenderBase {
         }
     }
     /**
+     * throwError: throw error if input is false
+     * @param input boolean
+     * @param opts.name error name
+     * @param opts.message error message
+     * @param opts.status error status.
+     */
+    throwError = async (
+        input: JsonLiteral,
+        opts?: JsonObj,
+    ): Promise<undefined> => {
+        try {
+            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
+            // console.debug(`DEBUG: opts=${JSON.stringify(opts)}`)
+            const verifiedInput = z.boolean().parse(input)
+            const verifiedOpts = z
+                .object({
+                    name: z.string().default('Invalid Error'),
+                    message: z.string().default('API Invalid Error'),
+                    status: z.number().default(500),
+                }).default({
+                    name: 'Invalid Error',
+                    message: 'API Invalid Error',
+                    status: 500,
+                })
+                .parse(opts)
+            if (!verifiedInput) {
+                throw new ExtendError({
+                    message: verifiedOpts.message,
+                    status: verifiedOpts.status,
+                    name: verifiedOpts.name,
+                })
+            }
+            return
+        } catch (e: unknown) {
+            if (e instanceof ExtendError) {
+                throw e
+            } else if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at throwError')
+        }
+    }
+    /**
      * parseNum: parse some value to number
      * @param input anyvalue
      * @returns if parse success, return value. when not, return undefined
@@ -233,7 +284,7 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at defineRef')
+            throw new Error('Unexpected Error at parseNum')
         }
     }
     /**
@@ -257,7 +308,7 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at defineRef')
+            throw new Error('Unexpected Error at parseBool')
         }
     }
     /**
@@ -337,7 +388,7 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at numSum')
+            throw new Error('Unexpected Error at numAvg')
         }
     }
 
@@ -421,7 +472,7 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at numSum')
+            throw new Error('Unexpected Error at numCompare')
         }
     }
     /**
@@ -451,7 +502,7 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at defineRef')
+            throw new Error('Unexpected Error at isAllSame')
         }
     }
 }

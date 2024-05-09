@@ -5,6 +5,7 @@ import { FavoExtend } from '@/example/favoExtend'
 import * as defs from './mockdefs'
 import { Redis } from '@upstash/redis/cloudflare'
 import { JsonObj } from '@/base/availableTypes'
+import { ExtendError } from '@/base/ExtendError'
 
 const RedisClient = new Redis({
     url: env.UPSTASH_REDIS_REST_URL,
@@ -25,6 +26,7 @@ const MockClient = new FavoExtend(env, [
     defs.TestJsonSafeadd,
     defs.TestJsonDel,
     defs.TestNumCompare,
+    defs.TestThrowError,
 ])
 
 describe('Mock test', () => {
@@ -131,7 +133,7 @@ describe('Mock test', () => {
             httpMethod: 'GET',
             requestUrl: new URL('https://example.com/showRank'),
         })
-        const rank = await RedisClient.zrange('rank/favo', 0, -1)
+        const rank = await RedisClient.zrange('rank/favo', 0, -1, { rev: true })
         expect(apiResult).toMatchObject({
             ranking: rank,
         })
@@ -234,5 +236,18 @@ describe('Mock test', () => {
             requestUrl: new URL('https://example.com/compare?value=20'),
         })
         expect(apiResult).toEqual(true)
+    })
+    it('[Positive] throwError function test', async () => {
+        const apiResult = MockClient.apiResult({
+            httpMethod: 'GET',
+            requestUrl: new URL('https://example.com/error'),
+        })
+        expect(() => apiResult).rejects.toThrow(
+            new ExtendError({
+                name: 'UserError',
+                status: 400,
+                message: 'User Caused Error',
+            }),
+        )
     })
 })

@@ -68,7 +68,7 @@ export class RedisExtend extends RedisClient {
             if (Array.isArray(parsedResult) && parsedResult.length === 1) {
                 parsedResult = parsedResult[0]
             }
-            if (typeof parsedResult === "undefined") {
+            if (typeof parsedResult === 'undefined') {
                 throw new ExtendError({
                     message: `Data not found error`,
                     status: 404,
@@ -229,6 +229,7 @@ export class RedisExtend extends RedisClient {
         try {
             const result = await Promise.all(
                 keys.map(async (key) => {
+                    // console.debug(`DEBUG: key=${JSON.stringify(key)}`)
                     const count = await this.incrSum(key)
                     if (typeof count === 'undefined') {
                         return 0
