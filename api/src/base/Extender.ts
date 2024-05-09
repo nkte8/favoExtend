@@ -236,7 +236,8 @@ export class Extender extends ExtenderBase {
                     name: z.string().default('Invalid Error'),
                     message: z.string().default('API Invalid Error'),
                     status: z.number().default(500),
-                }).default({
+                })
+                .default({
                     name: 'Invalid Error',
                     message: 'API Invalid Error',
                     status: 500,
@@ -484,7 +485,7 @@ export class Extender extends ExtenderBase {
         try {
             // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
             const compareValue = input.shift()
-            if (input.length < 1 || compareValue === undefined) {
+            if (input.length < 1) {
                 return false
             }
             const result = input.reduce<boolean>((a, x) => {
