@@ -1,5 +1,11 @@
 # favoExtend
 
+## 1.0.8
+
+### Patch Changes
+
+- vitestの設定を明示化・ディレクトリ構成を修正しました
+
 ## 1.0.7
 
 ### Patch Changes
