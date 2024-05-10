@@ -27,6 +27,8 @@ const MockClient = new FavoExtend(env, [
     defs.TestJsonDel,
     defs.TestNumCompare,
     defs.TestThrowError,
+    defs.TestIsSame,
+    defs.TestIsSameNotAll,
 ])
 
 describe('Mock test', () => {
@@ -237,7 +239,7 @@ describe('Mock test', () => {
         })
         expect(apiResult).toEqual(true)
     })
-    it('[Positive] throwError function test', async () => {
+    it('[Negative] throwError function test', async () => {
         const apiResult = MockClient.apiResult({
             httpMethod: 'GET',
             requestUrl: new URL('https://example.com/error'),
@@ -249,5 +251,37 @@ describe('Mock test', () => {
                 message: 'User Caused Error',
             }),
         )
+    })
+    it('[Positive] isSame function test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'POST',
+            requestUrl: new URL('https://example.com/issame'),
+            input: ['hoge', 'hoge', 'hoge'],
+        })
+        expect(apiResult).toMatchObject(true)
+    })
+    it('[Negative] isSame function test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'POST',
+            requestUrl: new URL('https://example.com/issame'),
+            input: ['hoge', 'hoge', 'hoge', 'hoge', 'hogea'],
+        })
+        expect(apiResult).toMatchObject(false)
+    })
+    it('[Positive] isSame function with notAll test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'POST',
+            requestUrl: new URL('https://example.com/issamenotall'),
+            input: ['hoge', 'fuge', 'fuga', 'hoge', 'fugea'],
+        })
+        expect(apiResult).toMatchObject(true)
+    })
+    it('[Negative] isSame function with notAll test', async () => {
+        const apiResult = await MockClient.apiResult({
+            httpMethod: 'POST',
+            requestUrl: new URL('https://example.com/issamenotall'),
+            input: ['hoge', 'fuge', 'fugera', 'hogefuge', 'fugea'],
+        })
+        expect(apiResult).toMatchObject(false)
     })
 })

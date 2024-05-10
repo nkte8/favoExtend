@@ -387,7 +387,7 @@ export const TestThrowError = new Definition(
     [
         {
             functionName: 'defineRef',
-            input: false,
+            input: true,
             output: z.boolean(),
         },
         {
@@ -398,6 +398,39 @@ export const TestThrowError = new Definition(
                 status: 400,
                 message: 'User Caused Error',
             },
+        },
+    ],
+)
+export const TestIsSame = new Definition(
+    {
+        path: '/issame',
+        method: 'POST',
+        input: z.string().array(),
+        output: '${#0}',
+    },
+    [
+        {
+            functionName: 'isSame',
+            input: '${#}',
+            output: z.boolean(),
+        },
+    ],
+)
+export const TestIsSameNotAll = new Definition(
+    {
+        path: '/issamenotall',
+        method: 'POST',
+        input: z.string().array(),
+        output: '${#0}',
+    },
+    [
+        {
+            functionName: 'isSame',
+            input: '${#}',
+            opts: {
+                notAll: true,
+            },
+            output: z.boolean(),
         },
     ],
 )

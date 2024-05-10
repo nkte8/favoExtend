@@ -152,11 +152,7 @@ export class ExtenderBase extends RedisExtend {
             const dbFunctionOpts = dbInput[2]
             const dbFunctionMultiKeysRef = dbInput[3]
             const dbFunctionIfRef = dbInput[4]
-            // console.debug(
-            //     `DEBUG: keyRef={${dbFunctionKeyRef}}, input={${JSON.stringify(
-            //         dbFunctionInput,
-            //     )}}, opts=${JSON.stringify(dbFunctionOpts)}`,
-            // )
+            // console.debug(`DEBUG: dbFunctionInput=${dbFunctionInput}`)
 
             let dummyResult: JsonType | undefined
             const apiDefinedMethod = this.methods[dbDef.functionName]

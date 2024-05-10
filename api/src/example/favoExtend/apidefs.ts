@@ -143,7 +143,7 @@ export const Login = new Definition(
             },
         },
         {
-            functionName: 'isAllSame',
+            functionName: 'isSame',
             input: ['${#.passwd}', '${#0}'],
             output: z.boolean()
         },
@@ -178,7 +178,7 @@ export const PostFavoWithAuth = new Definition(
             ignoreFail: true,
         },
         {
-            functionName: 'isAllSame',
+            functionName: 'isSame',
             input: ['${#.token}', '${#0}'],
             output: z.boolean(),
         },

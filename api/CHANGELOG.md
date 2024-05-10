@@ -1,5 +1,18 @@
 # favoExtend
 
+## 1.0.10
+
+### Patch Changes
+
+- throwErrorの挙動を変更、reverseオプションの追加
+  - inputがTrueの場合にエラーをthrowするよう変更しました。また、`opts.reverse = true`とすることで従来の挙動に戻せます。
+- `isAllSame`関数を`isSame`関数に変更
+  - opts.notAllをtrueにした場合、すべての値ではなく、少なくとも１つの値が最初の配列の値と同じであればTrueを出力します。
+  - これにより以下のパターンが取得できます
+    - すべてが同じであることの検証: isSame, opts.notAll=false, return true
+    - 最初の値を配列が含まれることの検証: isSame, opts.notAll=true, return true
+    - すべての値が配列内で異なることの検証(=すべての値がユニークである): isSame, opts.notAll=true, return false
+
 ## 1.0.9
 
 ### Patch Changes

@@ -58,13 +58,13 @@ export class Extender extends ExtenderBase {
                 kind: 'anyNokey',
                 function: this.parseBool,
             },
-            isAllSame: {
-                kind: 'arrayNokey',
-                function: this.isAllSame,
-            },
             throwError: {
                 kind: 'literalNokey',
                 function: this.throwError,
+            },
+            isSame: {
+                kind: 'arrayNokey',
+                function: this.isSame,
             },
         })
     }
@@ -217,7 +217,7 @@ export class Extender extends ExtenderBase {
         }
     }
     /**
-     * throwError: throw error if input is false
+     * throwError: throw error if input is true
      * @param input boolean
      * @param opts.name error name
      * @param opts.message error message
@@ -236,14 +236,16 @@ export class Extender extends ExtenderBase {
                     name: z.string().default('Invalid Error'),
                     message: z.string().default('API Invalid Error'),
                     status: z.number().default(500),
+                    reverse: z.boolean().default(false),
                 })
                 .default({
                     name: 'Invalid Error',
                     message: 'API Invalid Error',
                     status: 500,
+                    reverse: false,
                 })
                 .parse(opts)
-            if (!verifiedInput) {
+            if (verifiedInput === !verifiedOpts.reverse) {
                 throw new ExtendError({
                     message: verifiedOpts.message,
                     status: verifiedOpts.status,
@@ -477,23 +479,33 @@ export class Extender extends ExtenderBase {
         }
     }
     /**
-     * isAllSame: compare array all
+     * isSame: compare array all
      * @param input anyvalue
-     * @returns if the all same, return true. when some item is not match return false
+     * @param opts.notAll if flug true, it become to return true when contain first item same at least from array.
+     * @returns if the array values all same to first, return true. when some item is not same return false. if array.length < 2, false
      */
-    isAllSame = async (input: JsonType[]): Promise<boolean> => {
+    isSame = async (input: JsonType[], opts?: JsonObj): Promise<boolean> => {
         try {
             // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
             const compareValue = input.shift()
             if (input.length < 1) {
                 return false
             }
+            const verifiedOpts = z
+                .object({
+                    notAll: z.boolean().default(false),
+                })
+                .default({ notAll: false })
+                .parse(opts)
+            // when notAll=false, return false when not matched.
+            // wehn notAll=true, return true when some value matched.
+            const initializer = !verifiedOpts.notAll
             const result = input.reduce<boolean>((a, x) => {
-                if (compareValue !== x) {
-                    a = false
+                if (initializer ? compareValue !== x : compareValue === x) {
+                    a = !initializer
                 }
                 return a
-            }, true)
+            }, initializer)
             return result
         } catch (e: unknown) {
             if (e instanceof Error) {

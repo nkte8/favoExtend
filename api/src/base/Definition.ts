@@ -174,6 +174,9 @@ export class Definition {
                 })
             }
             if (matchedArray.length === 0) {
+                // console.debug(
+                //     `DEBUG: relationData=${JSON.stringify(relationData)}`,
+                // )
                 return relationData
             }
             // console.debug(`DEBUG: inputData=${JSON.stringify(inputData)}`)
@@ -194,6 +197,7 @@ export class Definition {
             return relationData
         }
         if (Array.isArray(relationData)) {
+            // console.debug(`DEBUG: relationData=${relationData}`)
             const currentRelation = await Promise.all(
                 relationData.map(async (value) => {
                     return await this.replaceRelationTypeToInputAbleData({

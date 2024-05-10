@@ -71,9 +71,11 @@ Also you can use methods not control redis.
 | defineRef | Pass through the ref value. you can re-define output. |
 | parseNum | Parse string or any value to number. if cannot, return undefined |
 | parseBool | Parse string or any value to boolean. if cannot, return undefined |
+| throwError | When input boolean true, throw Error defined by opt. if opts.reverse = true, throw Error when input false |
 | numSum | Get sum from key list. |
 | numAvg | Get average from key list. |
 | numCompare | Compare first value to other values by opt.operator. default compare by equarity. |
+| isSame | Compare array. if all items same, return true. when opts.notAll = true, return true when array contain first item same at least from array. |
 
 ## How to use API
 
