@@ -332,11 +332,11 @@ export class Extender extends ExtenderBase {
                 return undefined
             }
             let result = parseResult.data
-            if (verifiedOpts.reverse) {
-                result *= -1
-            }
             if (verifiedOpts.abs) {
                 result = Math.abs(result)
+            }
+            if (verifiedOpts.reverse) {
+                result *= -1
             }
             return result
         } catch (e: unknown) {
