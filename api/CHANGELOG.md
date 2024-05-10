@@ -1,5 +1,12 @@
 # favoExtend
 
+## 1.0.11
+
+### Patch Changes
+
+- parseNum/parseBoolをnumConv/boolConvに変更
+  - optsによりより細かい制御ができるようになりました。
+
 ## 1.0.10
 
 ### Patch Changes

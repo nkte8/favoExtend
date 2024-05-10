@@ -364,7 +364,7 @@ export const TestNumCompare = new Definition(
             }),
         },
         {
-            functionName: 'parseNum',
+            functionName: 'numConv',
             input: '${#.value}',
             output: z.number(),
         },

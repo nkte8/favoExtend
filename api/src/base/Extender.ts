@@ -50,13 +50,13 @@ export class Extender extends ExtenderBase {
                 kind: 'arrayNokey',
                 function: this.numCompare,
             },
-            parseNum: {
-                kind: 'anyNokey',
-                function: this.parseNum,
+            numConv: {
+                kind: 'literalNokey',
+                function: this.numConv,
             },
-            parseBool: {
-                kind: 'anyNokey',
-                function: this.parseBool,
+            boolConv: {
+                kind: 'literalNokey',
+                function: this.boolConv,
             },
             throwError: {
                 kind: 'literalNokey',
@@ -267,42 +267,34 @@ export class Extender extends ExtenderBase {
         }
     }
     /**
-     * parseNum: parse some value to number
-     * @param input anyvalue
+     * boolConv: convert value to boolean
+     * @param input literal
+     * @param opts.reverse change true to false, false to true
      * @returns if parse success, return value. when not, return undefined
      */
-    parseNum = async (input: JsonType): Promise<number | undefined> => {
+    boolConv = async (
+        input: JsonLiteral,
+        opts?: JsonObj,
+    ): Promise<boolean | undefined> => {
         try {
-            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
-            const parseResult = z.coerce.number().safeParse(input)
-            if (!parseResult.success) {
-                return undefined
-            }
-            return parseResult.data
-        } catch (e: unknown) {
-            if (e instanceof Error) {
-                throw new ExtendError({
-                    message: e.message,
-                    status: 500,
-                    name: e.name,
+            const verifiedOpts = z
+                .object({
+                    reverse: z.boolean().default(false),
                 })
-            }
-            throw new Error('Unexpected Error at parseNum')
-        }
-    }
-    /**
-     * parseBool: parse some value to boolean
-     * @param input anyvalue
-     * @returns if parse success, return value. when not, return undefined
-     */
-    parseBool = async (input: JsonType): Promise<boolean | undefined> => {
-        try {
+                .default({
+                    reverse: false,
+                })
+                .parse(opts)
             // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
             const parseResult = z.coerce.boolean().safeParse(input)
             if (!parseResult.success) {
                 return undefined
             }
-            return parseResult.data
+            let result = parseResult.data
+            if (verifiedOpts.reverse) {
+                result = !result
+            }
+            return result
         } catch (e: unknown) {
             if (e instanceof Error) {
                 throw new ExtendError({
@@ -311,7 +303,51 @@ export class Extender extends ExtenderBase {
                     name: e.name,
                 })
             }
-            throw new Error('Unexpected Error at parseBool')
+            throw new Error('Unexpected Error at boolConv')
+        }
+    }
+
+    /**
+     * numConv: convert value to number
+     * @param input literal
+     * @param opts.reverse change positive to negative, negative to positive
+     * @param opts.abs change to absolute value
+     * @returns if parse success, return value. when not, return undefined
+     */
+    numConv = async (input: JsonLiteral, opts?: JsonObj): Promise<JsonType> => {
+        try {
+            const verifiedOpts = z
+                .object({
+                    reverse: z.boolean().default(false),
+                    abs: z.boolean().default(false),
+                })
+                .default({
+                    reverse: false,
+                    abs: false,
+                })
+                .parse(opts)
+            // console.debug(`DEBUG: input=${JSON.stringify(input)}`)
+            const parseResult = z.coerce.number().safeParse(input)
+            if (!parseResult.success) {
+                return undefined
+            }
+            let result = parseResult.data
+            if (verifiedOpts.reverse) {
+                result *= -1
+            }
+            if (verifiedOpts.abs) {
+                result = Math.abs(result)
+            }
+            return result
+        } catch (e: unknown) {
+            if (e instanceof Error) {
+                throw new ExtendError({
+                    message: e.message,
+                    status: 500,
+                    name: e.name,
+                })
+            }
+            throw new Error('Unexpected Error at numConv')
         }
     }
     /**
