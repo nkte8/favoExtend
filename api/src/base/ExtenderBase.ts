@@ -555,9 +555,9 @@ export class ExtenderBase extends RedisExtend {
             kind: 'keyOnly',
             function: this.del,
         },
-        incr: {
-            kind: 'keyOnly',
-            function: this.incr,
+        incrby: {
+            kind: "literal",
+            function: this.incrby,
         },
         get: {
             kind: 'keyOnly',
@@ -639,7 +639,7 @@ type methodType = {
               kind: 'literal'
               function: (
                   key: string,
-                  str: JsonLiteral,
+                  value: JsonLiteral,
                   opts?: JsonObj,
               ) => Promise<JsonType>
           }

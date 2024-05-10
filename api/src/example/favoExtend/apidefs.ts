@@ -55,13 +55,13 @@ export const PostFavo = new Definition(
     [
         {
             keyRef: 'user/${#.handle}/${#.id}',
-            functionName: 'incr',
+            functionName: 'incrby',
             output: z.number(),
             ignoreFail: true,
         },
         {
             keyRef: 'favo/${#.id}',
-            functionName: 'incr',
+            functionName: 'incrby',
             output: z.number(),
         },
     ],
@@ -184,14 +184,14 @@ export const PostFavoWithAuth = new Definition(
         },
         {
             keyRef: 'user/${#.handle}/${#.id}',
-            functionName: 'incr',
+            functionName: 'incrby',
             output: z.number(),
             ignoreFail: true,
             ifRef: '${#1}',
         },
         {
             keyRef: 'favo/${#.id}',
-            functionName: 'incr',
+            functionName: 'incrby',
             output: z.number(),
         },
     ],

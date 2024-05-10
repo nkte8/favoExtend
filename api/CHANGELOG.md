@@ -12,6 +12,9 @@
     - すべてが同じであることの検証: isSame, opts.notAll=false, return true
     - 最初の値を配列が含まれることの検証: isSame, opts.notAll=true, return true
     - すべての値が配列内で異なることの検証(=すべての値がユニークである): isSame, opts.notAll=true, return false
+- `incr`関数を`incrby`関数に変更
+  - inputに値をいれることで、その値分加算が可能
+  - 省略された場合、incr同様`1`プラスされる
 
 ## 1.0.9
 

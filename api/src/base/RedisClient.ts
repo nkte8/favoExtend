@@ -73,10 +73,11 @@ export class RedisClient {
      * @param key DB key
      * @param value incremental. defalut 1
      */
-    incr = async (key: string): Promise<number> => {
+    incrby = async (key: string, value: JsonLiteral): Promise<number> => {
         try {
             this.verifyKey(key)
-            return await this.Redis.incr(key)
+            const verifiedInput = z.number().default(1).parse(value)
+            return await this.Redis.incrby(key, verifiedInput)
         } catch (e: unknown) {
             if (e instanceof ExtendError) {
                 throw e

@@ -37,7 +37,7 @@ By default, you cau use these `functionName` below.
 | functionName | Description |
 | --- | --- |
 | del | [upstash DEL wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/generic/del). delete DB value. |
-| incr | [upstash INCR wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/incr). incriment DB value. |
+| incrby | [upstash INCRBY wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/incrby). incriment DB value by input, default 1. |
 | incrSum | Get sum of DB values. Input keyRef like `value/*` and return sum. If collected values contain not-number, skip value. |
 | incrSumMultiKeys | incrSum multikey wrapper. Get sums of DB values. Input multiKeysRef like `value/*` and return sum array. |
 | mget | [upstash MGET wrapper](https://upstash.com/docs/oss/sdks/ts/redis/commands/string/mget). get DB values as string by Multikeys. if not string, skip value. |
